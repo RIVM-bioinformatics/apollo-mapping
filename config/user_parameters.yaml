@@ -1,9 +1,0 @@
-db_dir: ../../db/kraken2
-exclusion_file: None
-input_dir: /home/boas/analysis/juno/raw_reads
-mean_quality_threshold: 28
-min_read_length: 50
-output_dir: /home/boas/analysis/juno/output_test3
-reference: ../../mtb/draft_TB_pipeline/references/AL123456.3.fasta
-use_singularity: 'True'
-window_size: 5
