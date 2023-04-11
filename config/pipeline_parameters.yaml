@@ -1,5 +1,25 @@
 threads:
-    template_rule: 1
+    call_variants: 2
+    fastqc: 1
+    filter_variants: 2
+    get_insert_size: 2
+    kraken2: 8
+    bwa: 4
+    samtools: 4
+    other: 1
+    qc_mapped: 1
+    samtools_stats: 1
+    fastp: 4
 
 mem_gb:
-    template_rule: 1
+    call_variants: 32
+    fastqc: 4
+    filter_variants: 8
+    get_insert_size: 8
+    kraken2: 64
+    bwa: 32
+    samtools: 8
+    other: 8
+    qc_mapped: 8
+    samtools_stats: 8
+    fastp: 8

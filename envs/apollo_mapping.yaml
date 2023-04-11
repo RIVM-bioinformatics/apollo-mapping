@@ -1,4 +1,4 @@
-name: juno_template
+name: apollo_mapping
 channels:
   - conda-forge
   - bioconda

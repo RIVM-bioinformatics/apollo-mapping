@@ -1,0 +1,6 @@
+channels:
+- bioconda
+- conda-forge
+dependencies:
+- gatk4==4.4.0.0
+- picard==2.27.5
