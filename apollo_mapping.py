@@ -42,7 +42,7 @@ class ApolloMapping(Pipeline):
         self.add_argument(
             "--db-dir",
             type=Path,
-            default="",
+            default="/mnt/db/apollo/kraken2_db",
             metavar="DIR",
             help="Kraken2 database directory (should include fungi!).",
         )
@@ -93,7 +93,8 @@ class ApolloMapping(Pipeline):
         if self.snakemake_args["use_singularity"]:
             self.snakemake_args["singularity_args"] = " ".join(
                 [
-                    self.snakemake_args["singularity_args"]
+                    self.snakemake_args["singularity_args"],
+                    f"--bind {self.db_dir}:{self.db_dir}",
                 ] # paths that singularity should be able to read from can be bound by adding to the above list
             )
 
