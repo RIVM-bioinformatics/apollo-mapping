@@ -2,7 +2,7 @@ threads:
     call_variants: 2
     fastqc: 1
     filter_variants: 2
-    get_insert_size: 2
+    picard: 1
     kraken2: 8
     bwa: 4
     samtools: 4
@@ -15,7 +15,7 @@ mem_gb:
     call_variants: 32
     fastqc: 4
     filter_variants: 8
-    get_insert_size: 8
+    picard: 64
     kraken2: 64
     bwa: 32
     samtools: 8

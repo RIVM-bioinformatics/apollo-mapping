@@ -34,9 +34,9 @@ rule get_insert_size:
     log:
         OUT + "/logs/get_insert_size/{sample}.log"
     threads:
-        config["threads"]["get_insert_size"]
+        config["threads"]["picard"]
     resources:
-        mem_gb = config["mem_gb"]["get_insert_size"]
+        mem_gb = config["mem_gb"]["picard"]
     shell:
         """
 java -jar /usr/picard/picard.jar CollectInsertSizeMetrics \
