@@ -147,9 +147,9 @@ rule MarkDuplicates:
     params:
         use_singularity=config["use_singularity"],
     threads:
-        config["threads"]["qc_mapped"]
+        config["threads"]["picard"]
     resources:
-        mem_gb = config["mem_gb"]["qc_mapped"]
+        mem_gb = config["mem_gb"]["picard"]
     log:
         OUT + "/logs/MarkDuplicates/{sample}.log"
     shell:
