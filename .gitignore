@@ -139,5 +139,6 @@ output
 config/variables.yaml
 config/juno_call.txt 
 core.*
+samtools.*.tmp.*.bam
 config/sample_sheet.yaml
 config/user_parameters.yaml
