@@ -26,6 +26,7 @@ include: "workflow/rules/clean_fastq.smk"
 include: "workflow/rules/map_clean_reads.smk"
 include: "workflow/rules/qc_mapping.smk"
 include: "workflow/rules/call_variants.smk"
+include: "workflow/rules/multiqc.smk"
 
 rule all:
     input:
@@ -35,3 +36,5 @@ rule all:
         expand(OUT + "/qc_mapping/allele_frequency/{sample}.tsv", sample = SAMPLES),
         expand(OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt", sample = SAMPLES),
         expand(OUT + "/qc_mapping/insertsize/{sample}_metrics.txt", sample = SAMPLES),
+        expand(OUT + "/qc_clean_fastq/{sample}_{read}_fastqc.zip", sample=SAMPLES, read=["pR1", "pR2"],),
+        expand(OUT + "/multiqc/multiqc.html"),

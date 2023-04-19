@@ -56,7 +56,7 @@ fi
 
 set -euo pipefail
 
-python apollo_mapping.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}"
+python apollo_mapping.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir} -w 180"
 
 result=$?
 
