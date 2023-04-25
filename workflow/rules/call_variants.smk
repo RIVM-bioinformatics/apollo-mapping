@@ -117,3 +117,28 @@ gatk SelectVariants \
 -R {input.ref} \
 --select-type-to-include SNP 2>&1>{log}
         """
+
+rule variant_evaluation:
+    input:
+        vcf = OUT + "/variants/marked/{sample}.vcf",
+        ref = OUT + "/reference/reference.fasta",
+    output:
+        eval = OUT + "/variants/evaluation/{sample}.txt",
+    message: "Variant evaluation for {wildcards.sample}"
+    conda:
+        "../envs/gatk_picard.yaml"
+    container:
+        "docker://broadinstitute/gatk:4.4.0.0"
+    log:
+        OUT + "/log/variant_evaluation/{sample}.log"
+    threads:
+        config["threads"]["filter_variants"]
+    resources:
+        mem_gb = config["mem_gb"]["filter_variants"]
+    shell:
+        """
+gatk VariantEval \
+-R {input.ref} \
+-O {output.eval} \
+--eval {input.vcf}\
+        """

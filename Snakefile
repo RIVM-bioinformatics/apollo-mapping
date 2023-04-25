@@ -32,6 +32,7 @@ rule all:
     input:
         expand(OUT + "/variants/{sample}.vcf", sample = SAMPLES),
         expand(OUT + "/variants/snps/{sample}.snps.vcf", sample = SAMPLES),
+        expand(OUT + "/variants/evaluation/{sample}.txt", sample = SAMPLES),
         expand(OUT + "/identify_species/{sample}/{sample}_species_content.txt", sample = SAMPLES),
         expand(OUT + "/qc_mapping/allele_frequency/{sample}.tsv", sample = SAMPLES),
         expand(OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt", sample = SAMPLES),

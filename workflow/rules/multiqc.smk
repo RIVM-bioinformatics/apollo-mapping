@@ -29,7 +29,7 @@ rule multiqc:
             sample=SAMPLES,
         ),
         expand(
-            OUT + "/variants/marked/{sample}.vcf",
+            OUT + "/variants/evaluation/{sample}.txt",
             sample=SAMPLES,
         ),
         # OUT + "/qc_de_novo_assembly/quast/report.tsv",
@@ -45,8 +45,8 @@ rule multiqc:
     log:
         OUT + "/log/multiqc/multiqc.log",
     threads: config["threads"]["multiqc"]
-    # conda:
-    #     "../envs/multiqc.yaml"
+    conda:
+        "../envs/multiqc.yaml"
     container:
         "docker://quay.io/biocontainers/multiqc:1.14--pyhdfd78af_0"
     params:
