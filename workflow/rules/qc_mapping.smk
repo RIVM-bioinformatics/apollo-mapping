@@ -9,7 +9,7 @@ rule samtools_stats:
     container:
         "docker://staphb/samtools:1.17"
     log:
-        OUT + "/logs/samtools_stats/{sample}.log"
+        OUT + "/log/samtools_stats/{sample}.log"
     threads:
         config["threads"]["samtools_stats"]
     resources:
@@ -96,7 +96,7 @@ rule get_insert_size:
     container:
         "docker://broadinstitute/picard:2.27.5"
     log:
-        OUT + "/logs/get_insert_size/{sample}.log"
+        OUT + "/log/get_insert_size/{sample}.log"
     threads:
         config["threads"]["picard"]
     resources:
@@ -120,7 +120,7 @@ rule extract_allele_frequencies:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/extract_allele_frequencies/{sample}.log"
+        OUT + "/log/extract_allele_frequencies/{sample}.log"
     threads:
         config["threads"]["filter_variants"]
     resources:

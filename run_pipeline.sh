@@ -56,7 +56,8 @@ fi
 
 set -euo pipefail
 
-python apollo_mapping.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir} -w 180"
+# TODO(when implementing in irods) add the species here with irods project name(juno amr example)
+python apollo_mapping.py --queue "${QUEUE}" -i "${input_dir}" -o "${output_dir}"
 
 result=$?
 
