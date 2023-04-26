@@ -11,6 +11,7 @@ threads:
     samtools_stats: 1
     fastp: 4
     multiqc: 1
+    bbtools: 1
 
 mem_gb:
     call_variants: 32
@@ -25,3 +26,4 @@ mem_gb:
     samtools_stats: 8
     fastp: 8
     multiqc: 8
+    bbtools: 6

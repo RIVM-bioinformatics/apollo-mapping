@@ -12,17 +12,18 @@ rule multiqc:
         expand(
             OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt",
             sample=SAMPLES,
-            read="R1 R2".split(),
         ),
         expand(
             OUT + "/qc_mapping/insertsize/{sample}_metrics.txt",
             sample=SAMPLES,
-            read="R1 R2".split(),
         ),
         # expand(
-        #     OUT + "/qc_mapping/allele_frequency/{sample}.tsv",
+        #     OUT + "/qc_mapping/bbtools/{sample}_MinLenFiltSummary.tsv",
         #     sample=SAMPLES,
-        #     read="R1 R2".split(),
+        # ),
+        # expand(
+        #     OUT + "/qc_mapping/bbtools/{sample}_perMinLenFiltScaffold.tsv",
+        #     sample=SAMPLES,
         # ),
         expand(
             OUT + "/identify_species/{sample}/{sample}_bracken_species.kreport2",
@@ -32,10 +33,6 @@ rule multiqc:
             OUT + "/variants/evaluation/{sample}.txt",
             sample=SAMPLES,
         ),
-        # OUT + "/qc_de_novo_assembly/quast/report.tsv",
-        # OUT + "/qc_de_novo_assembly/checkm/checkm_report.tsv",
-        # expand(OUT + "/log/clean_fastq/clean_fastq_{sample}.log", sample=SAMPLES),
-
     output:
         OUT + "/multiqc/multiqc.html",
         phred=OUT + "/multiqc/multiqc_data/multiqc_data.json",

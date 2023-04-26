@@ -37,5 +37,8 @@ rule all:
         expand(OUT + "/qc_mapping/allele_frequency/{sample}.tsv", sample = SAMPLES),
         expand(OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt", sample = SAMPLES),
         expand(OUT + "/qc_mapping/insertsize/{sample}_metrics.txt", sample = SAMPLES),
+        expand(OUT+ "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv", sample=SAMPLES),
         expand(OUT + "/qc_clean_fastq/{sample}_{read}_fastqc.zip", sample=SAMPLES, read=["pR1", "pR2"],),
         expand(OUT + "/multiqc/multiqc.html"),
+        expand(OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv"),
+        expand(OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv"),
