@@ -24,9 +24,7 @@ fi
 
 #----------------------------------------------#
 # Create/update necessary environments
-PATH_MAMBA_YAML="envs/mamba.yaml"
 PATH_MASTER_YAML="envs/apollo_mapping.yaml"
-MAMBA_NAME=$(head -n 1 ${PATH_MAMBA_YAML} | cut -f2 -d ' ')
 MASTER_NAME=$(head -n 1 ${PATH_MASTER_YAML} | cut -f2 -d ' ')
 
 echo -e "\nUpdating necessary environments to run the pipeline..."
@@ -35,9 +33,6 @@ echo -e "\nUpdating necessary environments to run the pipeline..."
 # activating an environment and for testing whether some variables
 # are set or not
 set +euo pipefail 
-
-conda env update -f "${PATH_MAMBA_YAML}"
-source activate "${MAMBA_NAME}"
 
 mamba env update -f "${PATH_MASTER_YAML}"
 
