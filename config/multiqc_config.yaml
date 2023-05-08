@@ -1,0 +1,42 @@
+# Source: https://github.com/ewels/MultiQC/blob/master/multiqc_config_example.yaml
+# Date: 20181026
+
+# Title to use for the report.
+title: Quality control metrics
+
+# How to plot graphs. Different templates can override these settings, but
+# the default template can use interactive plots (Javascript using HighCharts)
+# or flat plots (images, using MatPlotLib). With interactive plots, the report
+# can prevent automatically rendering all graphs if there are lots of samples
+# to prevent the browser being locked up when the report opens.
+plots_force_flat: False          # Try to use only flat image graphs
+plots_force_interactive: False   # Try to use only interactive javascript graphs
+plots_flat_numseries: 100        # If neither of the above, use flat if > this number of datasets
+num_datasets_plot_limit: 30      # If interactive, don't plot on load if > this number of datasets
+max_table_rows: 750             # Swap tables for a beeswarm plot above this
+
+custom_data:
+  CheckM_stats:
+    section_name: 'CheckM'
+    description: 'CheckM provides robust estimates of genome completeness and contamination by using collocated sets of genes that are ubiquitous and single-copy within a phylogenetic lineage. '
+    plot_type: 'table'
+
+sp:
+  CheckM_stats:
+    fn: 'checkm_report*'
+
+table_cond_formatting_rules:
+  completeness:
+    pass:
+      - gt: 95.9
+    warn:
+      - eq: 95
+    fail:
+      - lt: 95.9
+  contamination:
+    pass:
+      - lt: 4.1
+    warn:
+      - eq: 5
+    fail:
+      - gt: 4.1

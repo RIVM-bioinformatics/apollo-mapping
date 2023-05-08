@@ -26,12 +26,14 @@ include: "workflow/rules/clean_fastq.smk"
 include: "workflow/rules/map_clean_reads.smk"
 include: "workflow/rules/qc_mapping.smk"
 include: "workflow/rules/call_variants.smk"
+include: "workflow/rules/multiqc.smk"
 
 rule all:
     input:
         expand(OUT + "/variants/{sample}.vcf", sample = SAMPLES),
         expand(OUT + "/variants/snps/{sample}.snps.vcf", sample = SAMPLES),
-        expand(OUT + "/identify_species/{sample}/{sample}_species_content.txt", sample = SAMPLES),
-        expand(OUT + "/qc_mapping/allele_frequency/{sample}.tsv", sample = SAMPLES),
-        expand(OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt", sample = SAMPLES),
-        expand(OUT + "/qc_mapping/insertsize/{sample}_metrics.txt", sample = SAMPLES),
+        OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
+        OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
+        OUT + "/multiqc/multiqc.html",
+        OUT + "/qc_mapping/report_allelefreq_multiallelic.tsv",
+        OUT + "/qc_mapping/report_filter_status.tsv"

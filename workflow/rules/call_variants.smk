@@ -19,7 +19,7 @@ rule call_variants:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/haplotypecaller/{sample}.log"
+        OUT + "/log/haplotypecaller/{sample}.log"
     threads:
         config["threads"]["call_variants"]
     resources:
@@ -45,7 +45,7 @@ rule mark_low_confidence_variants:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/mark_low_confidence_variants/{sample}.log"
+        OUT + "/log/mark_low_confidence_variants/{sample}.log"
     threads:
         config["threads"]["filter_variants"]
     resources:
@@ -78,7 +78,7 @@ rule remove_low_confidence_variants:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/remove_low_confidence_variants/{sample}.log"
+        OUT + "/log/remove_low_confidence_variants/{sample}.log"
     threads:
         config["threads"]["filter_variants"]
     resources:
@@ -104,7 +104,7 @@ rule extract_snps_only:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/extract_snps_only/{sample}.log"
+        OUT + "/log/extract_snps_only/{sample}.log"
     threads:
         config["threads"]["filter_variants"]
     resources:
@@ -116,4 +116,29 @@ gatk SelectVariants \
 -O {output.vcf} \
 -R {input.ref} \
 --select-type-to-include SNP 2>&1>{log}
+        """
+
+rule variant_evaluation:
+    input:
+        vcf = OUT + "/variants/marked/{sample}.vcf",
+        ref = OUT + "/reference/reference.fasta",
+    output:
+        eval = OUT + "/variants/evaluation/{sample}.txt",
+    message: "Variant evaluation for {wildcards.sample}"
+    conda:
+        "../envs/gatk_picard.yaml"
+    container:
+        "docker://broadinstitute/gatk:4.4.0.0"
+    log:
+        OUT + "/log/variant_evaluation/{sample}.log"
+    threads:
+        config["threads"]["filter_variants"]
+    resources:
+        mem_gb = config["mem_gb"]["filter_variants"]
+    shell:
+        """
+gatk VariantEval \
+-R {input.ref} \
+-O {output.eval} \
+--eval {input.vcf}\
         """

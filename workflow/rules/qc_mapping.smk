@@ -9,7 +9,7 @@ rule samtools_stats:
     container:
         "docker://staphb/samtools:1.17"
     log:
-        OUT + "/logs/samtools_stats/{sample}.log"
+        OUT + "/log/samtools_stats/{sample}.log"
     threads:
         config["threads"]["samtools_stats"]
     resources:
@@ -19,6 +19,70 @@ rule samtools_stats:
 samtools stats {input.bam} > {output.txt} 2>{log}
         """
 
+rule pileup_contig_metrics:
+    input:
+        bam=OUT + "/mapped_reads/duprem/{sample}.bam",
+    output:
+        summary=OUT
+        + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
+        perScaffold=OUT
+        + "/qc_mapping/bbtools/per_sample/{sample}_perMinLenFiltScaffold.tsv",
+    message:
+        "Making pileup and calculating contig metrics for {wildcards.sample}."
+    conda:
+        "../envs/bbtools.yaml"
+    container:
+        "docker://staphb/bbtools:39.01"
+    log:
+        OUT + "/log/qc_mapping/bbtools_{sample}.log",
+    threads: config["threads"]["bbtools"]
+    resources:
+        mem_gb=config["mem_gb"]["bbtools"],
+    shell:
+        """
+        pileup.sh in={input.bam} \
+            out={output.perScaffold} \
+            secondary=f \
+            samstreamer=t 2> {output.summary} 
+        cp {output.summary} {log}
+        """
+
+rule parse_bbtools:
+    input:
+        expand(
+            OUT + "/qc_mapping/bbtools/per_sample/{sample}_perMinLenFiltScaffold.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
+    message:
+        "Parsing the results of bbtools (pileup contig metrics)."
+    threads: config["threads"]["bbtools"]
+    resources:
+        mem_gb=config["mem_gb"]["bbtools"],
+    log:
+        OUT + "/log/qc_mapping/pileup_contig_metrics_combined.log",
+    script:
+        "../scripts/parse_bbtools.py"
+
+rule parse_bbtools_summary:
+    input:
+        expand(
+            OUT
+            + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
+    message:
+        "Parsing the results of bbtools (pileup contig metrics) and making a multireport."
+    threads: config["threads"]["bbtools"]
+    resources:
+        mem_gb=config["mem_gb"]["bbtools"],
+    log:
+        OUT + "/log/qc_mapping/pileup_contig_metrics_combined.log",
+    shell:
+        "python workflow/scripts/parse_bbtools_summary.py -i {input} -o {output} > {log}"
 
 rule get_insert_size:
     input:
@@ -32,7 +96,7 @@ rule get_insert_size:
     container:
         "docker://broadinstitute/picard:2.27.5"
     log:
-        OUT + "/logs/get_insert_size/{sample}.log"
+        OUT + "/log/get_insert_size/{sample}.log"
     threads:
         config["threads"]["picard"]
     resources:
@@ -45,18 +109,65 @@ O={output.txt} \
 H={output.pdf} 2>&1>{log}
         """
 
-rule extract_allele_frequencies:
+rule get_filter_status:
     input:
-        vcf = OUT + "/variants/{sample}.vcf",
+        vcf = OUT + "/variants/marked/{sample}.vcf",
     output:
-        tsv = OUT + "/qc_mapping/allele_frequency/{sample}.tsv"
-    message: "Writing allele frequency of variants to table for {wildcards.sample}"
+        tsv = OUT + "/qc_mapping/get_filter_status/{sample}.tsv"
+    message: "Writing filter status of variants to table for {wildcards.sample}"
     conda:
         "../envs/gatk_picard.yaml"
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/extract_allele_frequencies/{sample}.log"
+        OUT + "/logs/get_filter_status/{sample}.log"
+    threads:
+        config["threads"]["filter_variants"]
+    resources:
+        mem_gb = config["mem_gb"]["filter_variants"]
+    shell:
+        """
+gatk VariantsToTable -V {input.vcf} \
+-F CHROM \
+-F POS \
+-F TYPE \
+-F REF \
+-F ALT \
+-F DP \
+-F FILTER \
+--show-filtered \
+-O {output.tsv} 2>&1>{log}
+        """
+
+rule combine_filter_status:
+    input:
+        expand(OUT + "/qc_mapping/get_filter_status/{sample}.tsv", sample = SAMPLES)
+    output:
+        OUT + "/qc_mapping/report_filter_status.tsv"
+    message: "Combining variant QC reports"
+    log:
+        OUT + "/logs/combine_filter_status.log"
+    threads:
+        config["threads"]["other"]
+    resources:
+        mem_gb = config["mem_gb"]["other"]
+    shell:
+        """
+python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields FILTER
+        """
+
+rule count_allelefreq_multiallelic:
+    input:
+        vcf = OUT + "/variants/{sample}.vcf",
+    output:
+        tsv = OUT + "/qc_mapping/count_allelefreq_multiallelic/{sample}.tsv"
+    message: "Writing allele frequency and multi-allelic status of variants to table for {wildcards.sample}"
+    conda:
+        "../envs/gatk_picard.yaml"
+    container:
+        "docker://broadinstitute/gatk:4.4.0.0"
+    log:
+        OUT + "/logs/count_allelefreq_multiallelic/{sample}.log"
     threads:
         config["threads"]["filter_variants"]
     resources:
@@ -71,8 +182,23 @@ gatk VariantsToTable -V {input.vcf} \
 -F ALT \
 -F DP \
 -F AF \
+-F MULTI-ALLELIC \
 -O {output.tsv} 2>&1>{log}
         """
 
-# rule get_filter_reasons_variants:
-#     input:
+rule combine_allelefreq_multiallelic:
+    input:
+        expand(OUT + "/qc_mapping/count_allelefreq_multiallelic/{sample}.tsv", sample = SAMPLES)
+    output:
+        OUT + "/qc_mapping/report_allelefreq_multiallelic.tsv"
+    message: "Combining variant QC reports"
+    log:
+        OUT + "/logs/combine_allelefreq_multiallelic.log"
+    threads:
+        config["threads"]["other"]
+    resources:
+        mem_gb = config["mem_gb"]["other"]
+    shell:
+        """
+python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields AF MULTI-ALLELIC
+        """

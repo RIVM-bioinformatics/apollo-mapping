@@ -26,18 +26,30 @@ class ApolloMapping(Pipeline):
     pipeline_name: str = __package_name__
     pipeline_version: str = __version__
     input_type: str = "fastq"
+    species_options = ["candida_auris", "aspergillus_fumigatus"]
+
 
     def _add_args_to_parser(self) -> None:
         super()._add_args_to_parser()
 
-        self.parser.description = "Apollo mapping pipelines for reference mapping analysis of fungal genomes."
-        
+        self.parser.description = "Apollo mapping pipelines for reference mapping analysis of fungal genomes."    
+
+        self.add_argument(
+            "-s",
+            "--species",
+            type=str.lower,
+            metavar="STR",
+            help=f"Species to use, choose from: {self.species_options}",
+            required=True,
+            dest="species",
+            choices= self.species_options
+        )
         self.add_argument(
             "--reference",
             type=Path,
             metavar="FILE",
-            help="Reference genome to use",
-            required=True
+            help="Reference genome to use default is chosen based on species argument, defaults per species can be found in: /mnt/db/apollo/mapping/[species]",
+            required=False
         )
         self.add_argument(
             "--db-dir",
@@ -70,7 +82,7 @@ class ApolloMapping(Pipeline):
             default = 50,
             help = "Minimum length for fastq reads to be kept after trimming."
         )
-        
+
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
@@ -80,13 +92,11 @@ class ApolloMapping(Pipeline):
         self.window_size: int = args.window_size
         self.min_read_length: int = args.minimum_length
         self.reference: Path = args.reference
+        self.time_limit: int = args.time_limit
+        self.species: str = args.species
 
         return args
     
-    # # Extra class methods for this pipeline can be defined here
-    # def example_class_method(self):
-    #     print(f"example option is set to {self.example}")
-
     def setup(self) -> None:
         super().setup()
 
@@ -98,10 +108,19 @@ class ApolloMapping(Pipeline):
                 ] # paths that singularity should be able to read from can be bound by adding to the above list
             )
 
-        # # Extra class methods for this pipeline can be invoked here
-        # if self.example:
-        #     self.example_class_method()
+        #Change default time_limit to 180, or keep time_limit from the command line if > 180
+        if self.time_limit < 180:
+            self.time_limit = 180
 
+        # select a reference based on species:
+        #self.ref_dir = "/mnt/db/apollo/mapping/"
+        if self.species == "candida_auris":
+            self.reference = "/mnt/db/apollo/mapping/candida_auris/GCA_016772135.1.fasta"
+        elif self.species == "aspergillus_fumigatus":
+            self.reference = "/mnt/db/apollo/mapping/aspergillus_fumigatus/CEA10.fasta"
+
+        print("Running pipeline for " + self.species + " with reference: " + str(self.reference))
+ 
         with open(
             Path(__file__).parent.joinpath("config/pipeline_parameters.yaml")
         ) as f:
@@ -118,8 +137,9 @@ class ApolloMapping(Pipeline):
             "min_read_length": int(self.min_read_length),
             "reference": str(self.reference),
             "use_singularity": str(self.snakemake_args['use_singularity']),
+            "time-limit": str(self.time_limit),
+            "species": str(self.species),
         }
-
 
 if __name__ == "__main__":
     main()

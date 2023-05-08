@@ -21,7 +21,7 @@ rule bwa_index_ref:
     container:
         "docker://staphb/bwa:0.7.17"
     log:
-        OUT + "/logs/bwa_index_ref.log"
+        OUT + "/log/bwa_index_ref.log"
     threads:
         config["threads"]["other"]
     resources:
@@ -43,7 +43,7 @@ rule gatk_index_ref:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/gatk_index_ref.log"
+        OUT + "/log/gatk_index_ref.log"
     threads:
         config["threads"]["other"]
     resources:
@@ -65,7 +65,7 @@ rule samtools_index_ref:
     container:
         "docker://staphb/samtools:1.17"
     log:
-        OUT + "/logs/samtools_index_ref.log"
+        OUT + "/log/samtools_index_ref.log"
     threads:
         config["threads"]["other"]
     resources:
@@ -94,7 +94,7 @@ rule bwa_mem:
     container:
         "docker://staphb/bwa:0.7.17"
     log:
-        OUT + "/logs/bwa_mem/{sample}.log"
+        OUT + "/log/bwa_mem/{sample}.log"
     threads:
         config["threads"]["bwa"]
     resources:
@@ -122,7 +122,7 @@ rule sam_to_sorted_bam:
     container:
         "docker://staphb/samtools:1.17"
     log:
-        OUT + "/logs/sam_to_sorted_bam/{sample}.log"
+        OUT + "/log/sam_to_sorted_bam/{sample}.log"
     threads:
         config["threads"]["samtools"]
     resources:
@@ -151,7 +151,7 @@ rule MarkDuplicates:
     resources:
         mem_gb = config["mem_gb"]["picard"]
     log:
-        OUT + "/logs/MarkDuplicates/{sample}.log"
+        OUT + "/log/MarkDuplicates/{sample}.log"
     shell:
         """
 if [ {params.use_singularity} == True ]
@@ -188,7 +188,7 @@ rule index_bam:
     resources:
         mem_gb = config["mem_gb"]["other"]
     log:
-        OUT + "/logs/index_bam/{sample}.log"
+        OUT + "/log/index_bam/{sample}.log"
     shell:
         """
 samtools index {input.bam} 2>&1>{log}
