@@ -32,13 +32,6 @@ rule all:
     input:
         expand(OUT + "/variants/{sample}.vcf", sample = SAMPLES),
         expand(OUT + "/variants/snps/{sample}.snps.vcf", sample = SAMPLES),
-        expand(OUT + "/variants/evaluation/{sample}.txt", sample = SAMPLES),
-        expand(OUT + "/identify_species/{sample}/{sample}_species_content.txt", sample = SAMPLES),
-        expand(OUT + "/qc_mapping/allele_frequency/{sample}.tsv", sample = SAMPLES),
-        expand(OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt", sample = SAMPLES),
-        expand(OUT + "/qc_mapping/insertsize/{sample}_metrics.txt", sample = SAMPLES),
-        expand(OUT+ "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv", sample=SAMPLES),
-        expand(OUT + "/qc_clean_fastq/{sample}_{read}_fastqc.zip", sample=SAMPLES, read=["pR1", "pR2"],),
         OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
         OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
         OUT + "/multiqc/multiqc.html",
