@@ -9,7 +9,7 @@ rule samtools_stats:
     container:
         "docker://staphb/samtools:1.17"
     log:
-        OUT + "/logs/samtools_stats/{sample}.log"
+        OUT + "/log/samtools_stats/{sample}.log"
     threads:
         config["threads"]["samtools_stats"]
     resources:
@@ -19,6 +19,70 @@ rule samtools_stats:
 samtools stats {input.bam} > {output.txt} 2>{log}
         """
 
+rule pileup_contig_metrics:
+    input:
+        bam=OUT + "/mapped_reads/duprem/{sample}.bam",
+    output:
+        summary=OUT
+        + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
+        perScaffold=OUT
+        + "/qc_mapping/bbtools/per_sample/{sample}_perMinLenFiltScaffold.tsv",
+    message:
+        "Making pileup and calculating contig metrics for {wildcards.sample}."
+    conda:
+        "../envs/bbtools.yaml"
+    container:
+        "docker://staphb/bbtools:39.01"
+    log:
+        OUT + "/log/qc_mapping/bbtools_{sample}.log",
+    threads: config["threads"]["bbtools"]
+    resources:
+        mem_gb=config["mem_gb"]["bbtools"],
+    shell:
+        """
+        pileup.sh in={input.bam} \
+            out={output.perScaffold} \
+            secondary=f \
+            samstreamer=t 2> {output.summary} 
+        cp {output.summary} {log}
+        """
+
+rule parse_bbtools:
+    input:
+        expand(
+            OUT + "/qc_mapping/bbtools/per_sample/{sample}_perMinLenFiltScaffold.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
+    message:
+        "Parsing the results of bbtools (pileup contig metrics)."
+    threads: config["threads"]["bbtools"]
+    resources:
+        mem_gb=config["mem_gb"]["bbtools"],
+    log:
+        OUT + "/log/qc_mapping/pileup_contig_metrics_combined.log",
+    script:
+        "../scripts/parse_bbtools.py"
+
+rule parse_bbtools_summary:
+    input:
+        expand(
+            OUT
+            + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
+            sample=SAMPLES,
+        ),
+    output:
+        OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
+    message:
+        "Parsing the results of bbtools (pileup contig metrics) and making a multireport."
+    threads: config["threads"]["bbtools"]
+    resources:
+        mem_gb=config["mem_gb"]["bbtools"],
+    log:
+        OUT + "/log/qc_mapping/pileup_contig_metrics_combined.log",
+    shell:
+        "python workflow/scripts/parse_bbtools_summary.py -i {input} -o {output} > {log}"
 
 rule get_insert_size:
     input:
@@ -32,7 +96,7 @@ rule get_insert_size:
     container:
         "docker://broadinstitute/picard:2.27.5"
     log:
-        OUT + "/logs/get_insert_size/{sample}.log"
+        OUT + "/log/get_insert_size/{sample}.log"
     threads:
         config["threads"]["picard"]
     resources:
