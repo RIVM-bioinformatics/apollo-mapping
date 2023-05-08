@@ -35,7 +35,7 @@ class ApolloMapping(Pipeline):
         self.parser.description = "Apollo mapping pipelines for reference mapping analysis of fungal genomes."    
 
         self.add_argument(
-            "-s"
+            "-s",
             "--species",
             type=str.lower,
             metavar="STR",
