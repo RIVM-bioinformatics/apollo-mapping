@@ -34,3 +34,5 @@ rule all:
         expand(OUT + "/qc_mapping/allele_frequency/{sample}.tsv", sample = SAMPLES),
         expand(OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt", sample = SAMPLES),
         expand(OUT + "/qc_mapping/insertsize/{sample}_metrics.txt", sample = SAMPLES),
+        OUT + "/qc_mapping/report_allelefreq_multiallelic.tsv",
+        OUT + "/qc_mapping/report_filter_status.tsv"

@@ -45,18 +45,65 @@ O={output.txt} \
 H={output.pdf} 2>&1>{log}
         """
 
-rule extract_allele_frequencies:
+rule get_filter_status:
     input:
-        vcf = OUT + "/variants/{sample}.vcf",
+        vcf = OUT + "/variants/marked/{sample}.vcf",
     output:
-        tsv = OUT + "/qc_mapping/allele_frequency/{sample}.tsv"
-    message: "Writing allele frequency of variants to table for {wildcards.sample}"
+        tsv = OUT + "/qc_mapping/get_filter_status/{sample}.tsv"
+    message: "Writing filter status of variants to table for {wildcards.sample}"
     conda:
         "../envs/gatk_picard.yaml"
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/extract_allele_frequencies/{sample}.log"
+        OUT + "/logs/get_filter_status/{sample}.log"
+    threads:
+        config["threads"]["filter_variants"]
+    resources:
+        mem_gb = config["mem_gb"]["filter_variants"]
+    shell:
+        """
+gatk VariantsToTable -V {input.vcf} \
+-F CHROM \
+-F POS \
+-F TYPE \
+-F REF \
+-F ALT \
+-F DP \
+-F FILTER \
+--show-filtered \
+-O {output.tsv} 2>&1>{log}
+        """
+
+rule combine_filter_status:
+    input:
+        expand(OUT + "/qc_mapping/get_filter_status/{sample}.tsv", sample = SAMPLES)
+    output:
+        OUT + "/qc_mapping/report_filter_status.tsv"
+    message: "Combining variant QC reports"
+    log:
+        OUT + "/logs/combine_filter_status.log"
+    threads:
+        config["threads"]["other"]
+    resources:
+        mem_gb = config["mem_gb"]["other"]
+    shell:
+        """
+python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields FILTER
+        """
+
+rule count_allelefreq_multiallelic:
+    input:
+        vcf = OUT + "/variants/{sample}.vcf",
+    output:
+        tsv = OUT + "/qc_mapping/count_allelefreq_multiallelic/{sample}.tsv"
+    message: "Writing allele frequency and multi-allelic status of variants to table for {wildcards.sample}"
+    conda:
+        "../envs/gatk_picard.yaml"
+    container:
+        "docker://broadinstitute/gatk:4.4.0.0"
+    log:
+        OUT + "/logs/count_allelefreq_multiallelic/{sample}.log"
     threads:
         config["threads"]["filter_variants"]
     resources:
@@ -71,8 +118,23 @@ gatk VariantsToTable -V {input.vcf} \
 -F ALT \
 -F DP \
 -F AF \
+-F MULTI-ALLELIC \
 -O {output.tsv} 2>&1>{log}
         """
 
-# rule get_filter_reasons_variants:
-#     input:
+rule combine_allelefreq_multiallelic:
+    input:
+        expand(OUT + "/qc_mapping/count_allelefreq_multiallelic/{sample}.tsv", sample = SAMPLES)
+    output:
+        OUT + "/qc_mapping/report_allelefreq_multiallelic.tsv"
+    message: "Combining variant QC reports"
+    log:
+        OUT + "/logs/combine_allelefreq_multiallelic.log"
+    threads:
+        config["threads"]["other"]
+    resources:
+        mem_gb = config["mem_gb"]["other"]
+    shell:
+        """
+python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields AF MULTI-ALLELIC
+        """
