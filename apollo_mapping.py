@@ -48,6 +48,7 @@ class ApolloMapping(Pipeline):
             "--reference",
             type=Path,
             metavar="FILE",
+            dest="custom_reference",
             help="Reference genome to use default is chosen based on species argument, defaults per species can be found in: /mnt/db/apollo/mapping/[species]",
             required=False
         )
@@ -91,7 +92,8 @@ class ApolloMapping(Pipeline):
         self.mean_quality_threshold: int = args.mean_quality_threshold
         self.window_size: int = args.window_size
         self.min_read_length: int = args.minimum_length
-        self.reference: Path = args.reference
+        self.reference: Path = None
+        self.custom_reference: Path = args.custom_reference
         self.time_limit: int = args.time_limit
         self.species: str = args.species
 
@@ -119,7 +121,11 @@ class ApolloMapping(Pipeline):
         elif self.species == "aspergillus_fumigatus":
             self.reference = "/mnt/db/apollo/mapping/aspergillus_fumigatus/CEA10.fasta"
 
-        print("Running pipeline for " + self.species + " with reference: " + str(self.reference))
+        if self.custom_reference is not None:
+            print("A reference genome was specified by the user, which may not be the default reference genome for this species.")
+            self.reference = self.custom_reference
+
+        print(f"Running pipeline for {self.species} with reference: {self.reference}.")            
  
         with open(
             Path(__file__).parent.joinpath("config/pipeline_parameters.yaml")
