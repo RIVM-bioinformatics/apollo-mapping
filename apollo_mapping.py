@@ -95,7 +95,7 @@ class ApolloMapping(Pipeline):
         self.mean_quality_threshold: int = args.mean_quality_threshold
         self.window_size: int = args.window_size
         self.min_read_length: int = args.minimum_length
-        self.reference: Path = None
+        self.reference: Optional[Path] = None
         self.custom_reference: Path = args.custom_reference
         self.time_limit: int = args.time_limit
         self.species: str = args.species
@@ -120,11 +120,11 @@ class ApolloMapping(Pipeline):
         # select a reference based on species:
         # self.ref_dir = "/mnt/db/apollo/mapping/"
         if self.species == "candida_auris":
-            self.reference = (
+            self.reference = Path(
                 "/mnt/db/apollo/mapping/candida_auris/GCA_016772135.1.fasta"
             )
         elif self.species == "aspergillus_fumigatus":
-            self.reference = "/mnt/db/apollo/mapping/aspergillus_fumigatus/CEA10.fasta"
+            self.reference = Path("/mnt/db/apollo/mapping/aspergillus_fumigatus/CEA10.fasta")
 
         if self.custom_reference is not None:
             print(

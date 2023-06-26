@@ -1,7 +1,7 @@
 import pandas
 
 
-def parse_bbtools_perScaffold(input_bbtools, output_bbtools):
+def parse_bbtools_perScaffold(input_bbtools: str, output_bbtools: str) -> None:
     print("1")
     # create an empty dataframe with the right headers
     bbtools_headers_file = open(input_bbtools[0], "r")
@@ -23,10 +23,10 @@ def parse_bbtools_perScaffold(input_bbtools, output_bbtools):
         sample_dataframe["Sample"] = sample_name
 
         # append sample dataframe to master dataframe
-        df_bbtools = df_bbtools.append(sample_dataframe, ignore_index=True)
+        df_bbtools = pandas.concat([df_bbtools, sample_dataframe], ignore_index=True)
 
     # write concat output to file
     df_bbtools.to_csv(str(output_bbtools), index=False)
 
 
-parse_bbtools_perScaffold(snakemake.input, snakemake.output)
+parse_bbtools_perScaffold(snakemake.input, snakemake.output) # type: ignore[name-defined]

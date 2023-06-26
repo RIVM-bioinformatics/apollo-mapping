@@ -1,7 +1,7 @@
 import argparse
 
 
-def parse_bbtools_summary(input_bbtools, output_bbtools):
+def parse_bbtools_summary(input_bbtools: list[str], output_bbtools: str) -> None:
     summary_dict = {}
 
     for input_file in input_bbtools:
@@ -37,7 +37,7 @@ def parse_bbtools_summary(input_bbtools, output_bbtools):
     outfile.close()
 
 
-def main(input, output):
+def main(input: list[str], output: str) -> None:
     parse_bbtools_summary(input, output)
 
 
@@ -46,6 +46,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-i", "--input", type=str, required=True, metavar="PATH", nargs="+"
     )
-    parser.add_argument("-o", "--output", type=str, required=True, metavar="FILE")
+    parser.add_argument("-o", "--output", type=str, required=True, metavar="PATH")
     args = parser.parse_args()
     main(args.input, args.output)
