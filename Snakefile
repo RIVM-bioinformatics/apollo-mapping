@@ -25,6 +25,7 @@ include: "workflow/rules/identify_species.smk"
 include: "workflow/rules/clean_fastq.smk"
 include: "workflow/rules/map_clean_reads.smk"
 include: "workflow/rules/qc_mapping.smk"
+include: "workflow/rules/qc_variant_calling.smk"
 include: "workflow/rules/call_variants.smk"
 include: "workflow/rules/multiqc.smk"
 
@@ -35,5 +36,5 @@ rule all:
         OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
         OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
         OUT + "/multiqc/multiqc.html",
-        OUT + "/qc_mapping/report_allelefreq_multiallelic.tsv",
-        OUT + "/qc_mapping/report_filter_status.tsv"
+        OUT + "/qc_variant_calling/report_allelefreq_multiallelic.tsv",
+        # OUT + "/qc_mapping/report_filter_status.tsv"
