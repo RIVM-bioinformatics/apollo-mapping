@@ -118,3 +118,29 @@ bcftools stats \
 1>{output.txt} \
 2>{log}
         """
+
+
+rule variant_evaluation:
+    input:
+        vcf = OUT + "/variants/marked/{sample}.vcf",
+        ref = OUT + "/reference/reference.fasta",
+    output:
+        eval = OUT + "/qc_variant_calling/VariantEval/{sample}.txt",
+    message: "Variant evaluation for {wildcards.sample}"
+    conda:
+        "../envs/gatk_picard.yaml"
+    container:
+        "docker://broadinstitute/gatk:4.4.0.0"
+    log:
+        OUT + "/log/variant_evaluation/{sample}.log"
+    threads:
+        config["threads"]["filter_variants"]
+    resources:
+        mem_gb = config["mem_gb"]["filter_variants"]
+    shell:
+        """
+gatk VariantEval \
+-R {input.ref} \
+-O {output.eval} \
+--eval {input.vcf}\
+        """

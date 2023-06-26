@@ -31,7 +31,7 @@ rule multiqc:
             sample=SAMPLES,
         ),
         expand(
-            OUT + "/variants/evaluation/{sample}.txt",
+            OUT + "/qc_variant_calling/VariantEval/{sample}.txt",
             sample=SAMPLES,
         ),
     output:
