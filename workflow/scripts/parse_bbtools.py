@@ -1,5 +1,6 @@
 import pandas
 
+
 def parse_bbtools_perScaffold(input_bbtools, output_bbtools):
     print("1")
     # create an empty dataframe with the right headers
@@ -15,16 +16,16 @@ def parse_bbtools_perScaffold(input_bbtools, output_bbtools):
         sample_name = str(input_file).split("sample/")[1].split("_")[0]
 
         # read the data into a pandas dataframe
-        sample_dataframe = pandas.read_csv(input_file, sep='\t')
-        
+        sample_dataframe = pandas.read_csv(input_file, sep="\t")
+
         # add sample name to the dataframe
-        sample_dataframe.insert(0, 'Sample','')
-        sample_dataframe['Sample'] = sample_name
+        sample_dataframe.insert(0, "Sample", "")
+        sample_dataframe["Sample"] = sample_name
 
         # append sample dataframe to master dataframe
-        df_bbtools = df_bbtools.append(sample_dataframe, ignore_index = True)
+        df_bbtools = df_bbtools.append(sample_dataframe, ignore_index=True)
 
-    #write concat output to file
+    # write concat output to file
     df_bbtools.to_csv(str(output_bbtools), index=False)
 
 
