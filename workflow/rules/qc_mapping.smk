@@ -2,8 +2,7 @@ rule pileup_contig_metrics:
     input:
         bam=OUT + "/mapped_reads/duprem/{sample}.bam",
     output:
-        summary=OUT
-        + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
+        summary=OUT + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
         perScaffold=OUT
         + "/qc_mapping/bbtools/per_sample/{sample}_perMinLenFiltScaffold.tsv",
     message:
@@ -26,6 +25,7 @@ rule pileup_contig_metrics:
         cp {output.summary} {log}
         """
 
+
 rule parse_bbtools:
     input:
         expand(
@@ -44,11 +44,11 @@ rule parse_bbtools:
     script:
         "../scripts/parse_bbtools.py"
 
+
 rule parse_bbtools_summary:
     input:
         expand(
-            OUT
-            + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
+            OUT + "/qc_mapping/bbtools/per_sample/{sample}_MinLenFiltSummary.tsv",
             sample=SAMPLES,
         ),
     output:
@@ -63,23 +63,24 @@ rule parse_bbtools_summary:
     shell:
         "python workflow/scripts/parse_bbtools_summary.py -i {input} -o {output} > {log}"
 
+
 rule get_insert_size:
     input:
-        bam = OUT + "/mapped_reads/duprem/{sample}.bam",
+        bam=OUT + "/mapped_reads/duprem/{sample}.bam",
     output:
-        txt = OUT + "/qc_mapping/insertsize/{sample}_metrics.txt",
-        pdf = OUT + "/qc_mapping/insertsize/{sample}_report.pdf",
-    message: "Calculating insert size for {wildcards.sample}"
+        txt=OUT + "/qc_mapping/insertsize/{sample}_metrics.txt",
+        pdf=OUT + "/qc_mapping/insertsize/{sample}_report.pdf",
+    message:
+        "Calculating insert size for {wildcards.sample}"
     conda:
         "../envs/gatk_picard.yaml"
     container:
         "docker://broadinstitute/picard:2.27.5"
     log:
-        OUT + "/log/get_insert_size/{sample}.log"
-    threads:
-        config["threads"]["picard"]
+        OUT + "/log/get_insert_size/{sample}.log",
+    threads: config["threads"]["picard"]
     resources:
-        mem_gb = config["mem_gb"]["picard"]
+        mem_gb=config["mem_gb"]["picard"],
     shell:
         """
 java -jar /usr/picard/picard.jar CollectInsertSizeMetrics \
@@ -87,6 +88,7 @@ I={input.bam} \
 O={output.txt} \
 H={output.pdf} 2>&1>{log}
         """
+
 
 rule CollectAlignmentSummaryMetrics:
     input:
@@ -100,6 +102,7 @@ rule CollectAlignmentSummaryMetrics:
         """
 java -jar /usr/picard/picard.jar CollectAlignmentSummaryMetrics -I {input.bam} -R {input.ref} -O {output}
         """
+
 
 rule CollectWgsMetrics:
     input:

@@ -48,10 +48,10 @@ rule multiqc:
     container:
         "docker://quay.io/biocontainers/multiqc:1.14--pyhdfd78af_0"
     params:
-        config_file= "config/multiqc_config.yaml",
-        output_dir= OUT + "/multiqc",
+        config_file="config/multiqc_config.yaml",
+        output_dir=OUT + "/multiqc",
     resources:
-        mem_gb = config["mem_gb"]["multiqc"],
+        mem_gb=config["mem_gb"]["multiqc"],
     shell:
         """
         multiqc --interactive --force --config {params.config_file} \
