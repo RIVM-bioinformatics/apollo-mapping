@@ -10,21 +10,22 @@ rule multiqc:
             sample=SAMPLES,
         ),
         expand(
-            OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt",
+            OUT + "/qc_mapping/CollectAlignmentSummaryMetrics/{sample}.txt",
             sample=SAMPLES,
         ),
+        expand(
+            OUT + "/qc_mapping/CollectWgsMetrics/{sample}.txt",
+            sample=SAMPLES,
+        ),
+        expand(
+            OUT + "/qc_variant_calling/bcftools_stats/{sample}.txt",
+            sample=SAMPLES,
+        ),
+        OUT + "/qc_variant_calling/report_filter_status_mqc.tsv",
         expand(
             OUT + "/qc_mapping/insertsize/{sample}_metrics.txt",
             sample=SAMPLES,
         ),
-        # expand(
-        #     OUT + "/qc_mapping/bbtools/{sample}_MinLenFiltSummary.tsv",
-        #     sample=SAMPLES,
-        # ),
-        # expand(
-        #     OUT + "/qc_mapping/bbtools/{sample}_perMinLenFiltScaffold.tsv",
-        #     sample=SAMPLES,
-        # ),
         expand(
             OUT + "/identify_species/{sample}/{sample}_bracken_species.kreport2",
             sample=SAMPLES,
