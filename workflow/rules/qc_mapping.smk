@@ -1,24 +1,3 @@
-rule samtools_stats:
-    input:
-        bam = OUT + "/mapped_reads/duprem/{sample}.bam",
-    output:
-        txt = OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt",
-    message: "Calculating samtools stats for {wildcards.sample}"
-    conda:
-        "../envs/bwa_samtools.yaml"
-    container:
-        "docker://staphb/samtools:1.17"
-    log:
-        OUT + "/log/samtools_stats/{sample}.log"
-    threads:
-        config["threads"]["samtools_stats"]
-    resources:
-        mem_gb = config["mem_gb"]["samtools_stats"]
-    shell:
-        """
-samtools stats {input.bam} > {output.txt} 2>{log}
-        """
-
 rule pileup_contig_metrics:
     input:
         bam=OUT + "/mapped_reads/duprem/{sample}.bam",
@@ -109,96 +88,28 @@ O={output.txt} \
 H={output.pdf} 2>&1>{log}
         """
 
-rule get_filter_status:
+rule CollectAlignmentSummaryMetrics:
     input:
-        vcf = OUT + "/variants/marked/{sample}.vcf",
+        bam=OUT + "/mapped_reads/duprem/{sample}.bam",
+        ref=OUT + "/reference/reference.fasta",
     output:
-        tsv = OUT + "/qc_mapping/get_filter_status/{sample}.tsv"
-    message: "Writing filter status of variants to table for {wildcards.sample}"
-    conda:
-        "../envs/gatk_picard.yaml"
+        txt=OUT + "/qc_mapping/CollectAlignmentSummaryMetrics/{sample}.txt",
     container:
-        "docker://broadinstitute/gatk:4.4.0.0"
-    log:
-        OUT + "/logs/get_filter_status/{sample}.log"
-    threads:
-        config["threads"]["filter_variants"]
-    resources:
-        mem_gb = config["mem_gb"]["filter_variants"]
+        "docker://broadinstitute/picard:2.27.5"
     shell:
         """
-gatk VariantsToTable -V {input.vcf} \
--F CHROM \
--F POS \
--F TYPE \
--F REF \
--F ALT \
--F DP \
--F FILTER \
---show-filtered \
--O {output.tsv} 2>&1>{log}
+java -jar /usr/picard/picard.jar CollectAlignmentSummaryMetrics -I {input.bam} -R {input.ref} -O {output}
         """
 
-rule combine_filter_status:
+rule CollectWgsMetrics:
     input:
-        expand(OUT + "/qc_mapping/get_filter_status/{sample}.tsv", sample = SAMPLES)
+        bam=OUT + "/mapped_reads/sorted/{sample}.bam",
+        ref=OUT + "/reference/reference.fasta",
     output:
-        OUT + "/qc_mapping/report_filter_status.tsv"
-    message: "Combining variant QC reports"
-    log:
-        OUT + "/logs/combine_filter_status.log"
-    threads:
-        config["threads"]["other"]
-    resources:
-        mem_gb = config["mem_gb"]["other"]
-    shell:
-        """
-python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields FILTER
-        """
-
-rule count_allelefreq_multiallelic:
-    input:
-        vcf = OUT + "/variants/{sample}.vcf",
-    output:
-        tsv = OUT + "/qc_mapping/count_allelefreq_multiallelic/{sample}.tsv"
-    message: "Writing allele frequency and multi-allelic status of variants to table for {wildcards.sample}"
-    conda:
-        "../envs/gatk_picard.yaml"
+        txt=OUT + "/qc_mapping/CollectWgsMetrics/{sample}.txt",
     container:
-        "docker://broadinstitute/gatk:4.4.0.0"
-    log:
-        OUT + "/logs/count_allelefreq_multiallelic/{sample}.log"
-    threads:
-        config["threads"]["filter_variants"]
-    resources:
-        mem_gb = config["mem_gb"]["filter_variants"]
+        "docker://broadinstitute/picard:2.27.5"
     shell:
         """
-gatk VariantsToTable -V {input.vcf} \
--F CHROM \
--F POS \
--F TYPE \
--F REF \
--F ALT \
--F DP \
--F AF \
--F MULTI-ALLELIC \
--O {output.tsv} 2>&1>{log}
-        """
-
-rule combine_allelefreq_multiallelic:
-    input:
-        expand(OUT + "/qc_mapping/count_allelefreq_multiallelic/{sample}.tsv", sample = SAMPLES)
-    output:
-        OUT + "/qc_mapping/report_allelefreq_multiallelic.tsv"
-    message: "Combining variant QC reports"
-    log:
-        OUT + "/logs/combine_allelefreq_multiallelic.log"
-    threads:
-        config["threads"]["other"]
-    resources:
-        mem_gb = config["mem_gb"]["other"]
-    shell:
-        """
-python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields AF MULTI-ALLELIC
+java -jar /usr/picard/picard.jar CollectWgsMetrics -I {input.bam} -R {input.ref} -O {output}
         """
