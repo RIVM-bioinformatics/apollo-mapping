@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.0](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.1.0...v0.2.0) (2023-06-27)
+
+
+### Features
+
+* add extra picard qc ([c4fdde3](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/c4fdde38f853e8fb444561959582674e0fb55535))
+* customise mqc report ([d9140f6](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/d9140f6c35fad93c6cc9bbbc31224dcf7b5052f1))
+
+
+### Bug Fixes
+
+* finalise qc variant calling ([6111f81](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/6111f81ce1f530dac6373e07f552096120fd4c7c))
+* switch conda activation ([528183a](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/528183a7bac9c09460aa571dc70faf66d357b536))
+
+
+### Dependencies
+
+* upgrade smk to prevent pip updating smk ([bf081f9](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/bf081f9dde2d4ddbcf6313f957d31533a90f67b8))
+
 ## 0.1.0 (2023-05-08)
 
 
