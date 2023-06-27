@@ -10,27 +10,28 @@ rule multiqc:
             sample=SAMPLES,
         ),
         expand(
-            OUT + "/qc_mapping/samtools_stats/{sample}_metrics.txt",
+            OUT + "/qc_mapping/CollectAlignmentSummaryMetrics/{sample}.txt",
             sample=SAMPLES,
         ),
+        expand(
+            OUT + "/qc_mapping/CollectWgsMetrics/{sample}.txt",
+            sample=SAMPLES,
+        ),
+        expand(
+            OUT + "/qc_variant_calling/bcftools_stats/{sample}.txt",
+            sample=SAMPLES,
+        ),
+        OUT + "/qc_variant_calling/report_filter_status_mqc.tsv",
         expand(
             OUT + "/qc_mapping/insertsize/{sample}_metrics.txt",
             sample=SAMPLES,
         ),
-        # expand(
-        #     OUT + "/qc_mapping/bbtools/{sample}_MinLenFiltSummary.tsv",
-        #     sample=SAMPLES,
-        # ),
-        # expand(
-        #     OUT + "/qc_mapping/bbtools/{sample}_perMinLenFiltScaffold.tsv",
-        #     sample=SAMPLES,
-        # ),
         expand(
             OUT + "/identify_species/{sample}/{sample}_bracken_species.kreport2",
             sample=SAMPLES,
         ),
         expand(
-            OUT + "/variants/evaluation/{sample}.txt",
+            OUT + "/qc_variant_calling/VariantEval/{sample}.txt",
             sample=SAMPLES,
         ),
     output:
@@ -47,10 +48,10 @@ rule multiqc:
     container:
         "docker://quay.io/biocontainers/multiqc:1.14--pyhdfd78af_0"
     params:
-        config_file= "config/multiqc_config.yaml",
-        output_dir= OUT + "/multiqc",
+        config_file="config/multiqc_config.yaml",
+        output_dir=OUT + "/multiqc",
     resources:
-        mem_gb = config["mem_gb"]["multiqc"],
+        mem_gb=config["mem_gb"]["multiqc"],
     shell:
         """
         multiqc --interactive --force --config {params.config_file} \
