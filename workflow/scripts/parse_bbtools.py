@@ -29,4 +29,4 @@ def parse_bbtools_perScaffold(input_bbtools: str, output_bbtools: str) -> None:
     df_bbtools.to_csv(str(output_bbtools), index=False)
 
 
-parse_bbtools_perScaffold(snakemake.input, snakemake.output) # type: ignore[name-defined]
+parse_bbtools_perScaffold(snakemake.input, snakemake.output)  # type: ignore[name-defined]
