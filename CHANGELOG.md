@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.2.0...v0.2.1) (2023-07-04)
+
+
+### Bug Fixes
+
+* add HPC resources to last rules ([cd5d1f2](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/cd5d1f2b950d0507ec128d24e8148696024103dc))
+
+
+### Performance Improvements
+
+* set longer job time ([d8e95fb](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/d8e95fbce8f0919bf6afd4f12b9a881407b317c9))
+
 ## [0.2.0](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.1.0...v0.2.0) (2023-06-27)
 
 
