@@ -114,8 +114,8 @@ class ApolloMapping(Pipeline):
             )
 
         # Change default time_limit to 180, or keep time_limit from the command line if > 180
-        if self.time_limit < 180:
-            self.time_limit = 180
+        if self.time_limit < 300:
+            self.time_limit = 300
 
         # select a reference based on species:
         # self.ref_dir = "/mnt/db/apollo/mapping/"
