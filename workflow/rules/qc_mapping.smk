@@ -98,6 +98,11 @@ rule CollectAlignmentSummaryMetrics:
         txt=OUT + "/qc_mapping/CollectAlignmentSummaryMetrics/{sample}.txt",
     container:
         "docker://broadinstitute/picard:2.27.5"
+    log:
+        OUT + "/log/CollectAlignmentSummaryMetrics/{sample}.log",
+    threads: config["threads"]["picard"]
+    resources:
+        mem_gb=config["mem_gb"]["picard"],
     shell:
         """
 java -jar /usr/picard/picard.jar CollectAlignmentSummaryMetrics -I {input.bam} -R {input.ref} -O {output}
@@ -112,6 +117,11 @@ rule CollectWgsMetrics:
         txt=OUT + "/qc_mapping/CollectWgsMetrics/{sample}.txt",
     container:
         "docker://broadinstitute/picard:2.27.5"
+    log:
+        OUT + "/log/CollectWgsMetrics/{sample}.log",
+    threads: config["threads"]["picard"]
+    resources:
+        mem_gb=config["mem_gb"]["picard"],
     shell:
         """
 java -jar /usr/picard/picard.jar CollectWgsMetrics -I {input.bam} -R {input.ref} -O {output}
