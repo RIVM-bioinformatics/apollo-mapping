@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.2.1...v0.2.2) (2023-07-18)
+
+
+### Dependencies
+
+* remove anaconda and defaults channel and add nodefaults channel to environments ([0279943](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/0279943ca9631b9020cb4479840e1036cd58d835))
+
 ## [0.2.1](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.2.0...v0.2.1) (2023-07-04)
 
 
