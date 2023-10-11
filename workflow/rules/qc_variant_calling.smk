@@ -101,6 +101,23 @@ rule combine_allelefreq_multiallelic:
 python workflow/scripts/combine_variant_tables.py --input {input} --output {output} --fields AF MULTI-ALLELIC
         """
 
+rule prepare_mqc_allelefreq:
+    input:
+        report=OUT + "/qc_variant_calling/report_allelefreq_multiallelic.tsv",
+        header="files/report_heterozygous_status.mqc",
+    output:
+        OUT + "/qc_variant_calling/report_allelefreq_mqc.tsv",
+    message:
+        "Converting variant summary to mqc input file"
+    log:
+        OUT + "/log/prepare_mqc_allelefreq.log"
+    threads: config["threads"]["other"]
+    resources:
+        mem_gb=config["mem_gb"]["other"],
+    shell:
+        """
+python workflow/scripts/convert_af_mqc.py --input {input.report} --mqc {input.header} --output {output}
+        """
 
 rule bcftools_stats:
     input:
