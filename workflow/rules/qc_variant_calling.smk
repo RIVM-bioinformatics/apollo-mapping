@@ -10,7 +10,7 @@ rule get_filter_status:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/get_filter_status/{sample}.log",
+        OUT + "/log/get_filter_status/{sample}.log",
     threads: config["threads"]["filter_variants"]
     resources:
         mem_gb=config["mem_gb"]["filter_variants"],
@@ -40,7 +40,7 @@ rule combine_filter_status:
     message:
         "Combining variant QC reports"
     log:
-        OUT + "/logs/combine_filter_status.log",
+        OUT + "/log/combine_filter_status.log",
     threads: config["threads"]["other"]
     resources:
         mem_gb=config["mem_gb"]["other"],
@@ -62,7 +62,7 @@ rule count_allelefreq_multiallelic:
     container:
         "docker://broadinstitute/gatk:4.4.0.0"
     log:
-        OUT + "/logs/count_allelefreq_multiallelic/{sample}.log",
+        OUT + "/log/count_allelefreq_multiallelic/{sample}.log",
     threads: config["threads"]["filter_variants"]
     resources:
         mem_gb=config["mem_gb"]["filter_variants"],
@@ -92,7 +92,7 @@ rule combine_allelefreq_multiallelic:
     message:
         "Combining variant QC reports"
     log:
-        OUT + "/logs/combine_allelefreq_multiallelic.log",
+        OUT + "/log/combine_allelefreq_multiallelic.log",
     threads: config["threads"]["other"]
     resources:
         mem_gb=config["mem_gb"]["other"],
