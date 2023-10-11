@@ -1,8 +1,7 @@
 # id: "report_filter_status"
 # section_name: 'Filtered Variants'
-# description: 'Summary of why variants were filtered using bcftools filter, before being remove.'
+# description: 'Summary of why variants were filtered using bcftools filter, before being removed.'
 # format: 'tsv'
 # plot_type: 'bargraph'
 # pconfig:
 #    id: "report_filter_status"
-#    ylab: 'Count'
