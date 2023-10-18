@@ -1,0 +1,7 @@
+# id: "report_heterozygous_status"
+# section_name: 'Heterozygous Variants'
+# description: 'Summary of number of heterozygous and homozygous variants detected.'
+# format: 'tsv'
+# plot_type: 'table'
+# pconfig:
+#    id: "report_heterozygous_status"
