@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.2.2...v0.3.0) (2023-10-18)
+
+
+### Miscellaneous Chores
+
+* release 0.3.0 ([f13ed94](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/f13ed946a673e6000f8b1a4c17b6c106395d0b9f))
+
 ## [0.2.2](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.2.1...v0.2.2) (2023-07-18)
 
 
