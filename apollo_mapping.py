@@ -58,7 +58,7 @@ class ApolloMapping(Pipeline):
         self.add_argument(
             "--db-dir",
             type=Path,
-            default="/mnt/db/apollo/kraken2_db",
+            default="/mnt/db/apollo/kraken_db_apollo",
             metavar="DIR",
             help="Kraken2 database directory (should include fungi!).",
         )
