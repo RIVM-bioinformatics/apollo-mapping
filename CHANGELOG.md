@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.3.0...v0.4.0) (2023-10-19)
+
+
+### Features
+
+* allow running on cauris project ([9eb3e75](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/9eb3e7549bf974a923ac2a55219bf89c66f575c6))
+
 ## [0.3.0](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.2.2...v0.3.0) (2023-10-18)
 
 
