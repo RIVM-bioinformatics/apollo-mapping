@@ -71,6 +71,9 @@ case $PROJECT_NAME in
   asperg)
     SPECIES="Aspergillus_fumigatus"
     ;;
+  cauris)
+    SPECIES="Candida_auris"
+    ;;
   *)
     SPECIES="NotProvided"
     ;;
