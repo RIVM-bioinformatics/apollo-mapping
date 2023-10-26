@@ -121,7 +121,7 @@ class ApolloMapping(Pipeline):
         # self.ref_dir = "/mnt/db/apollo/mapping/"
         if self.species == "candida_auris":
             self.reference = Path(
-                "/mnt/db/apollo/mapping/candida_auris/GCA_016772135.1.fasta"
+                "/mnt/db/apollo/mapping/candida_auris/GCF_003013715.1.fasta"
             )
         elif self.species == "aspergillus_fumigatus":
             self.reference = Path(
