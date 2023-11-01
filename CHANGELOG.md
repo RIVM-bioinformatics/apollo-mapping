@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.0...v0.4.1) (2023-10-26)
+
+
+### Performance Improvements
+
+* set new ref for cauris ([0ada052](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/0ada05238e220b9ae5ecf7d4eed31c86e83daf22))
+
 ## [0.4.0](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.3.0...v0.4.0) (2023-10-19)
 
 
