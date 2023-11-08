@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.1...v0.4.2) (2023-11-08)
+
+
+### Bug Fixes
+
+* update master env path ([2314e0a](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/2314e0a9e626d6fe238d562377ae9d6360ca108a))
+
 ## [0.4.1](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.0...v0.4.1) (2023-10-26)
 
 
