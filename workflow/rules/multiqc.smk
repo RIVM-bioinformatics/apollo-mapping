@@ -21,7 +21,7 @@ rule multiqc:
             OUT + "/qc_variant_calling/bcftools_stats/{sample}.txt",
             sample=SAMPLES,
         ),
-        OUT + "/qc_variant_calling/report_filter_status_mqc.tsv",
+        # OUT + "/qc_variant_calling/report_filter_status_mqc.tsv",
         OUT + "/qc_variant_calling/report_allelefreq_mqc.tsv",
         expand(
             OUT + "/qc_mapping/insertsize/{sample}_metrics.txt",
