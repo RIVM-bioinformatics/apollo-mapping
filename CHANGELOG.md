@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.2...v0.4.3) (2024-06-03)
+
+
+### Bug Fixes
+
+* disable filter_status in mqc report ([327fd5a](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/327fd5ae34dbabd26089d723cb8cc5ee29e2cf45))
+
 ## [0.4.2](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.1...v0.4.2) (2023-11-08)
 
 
