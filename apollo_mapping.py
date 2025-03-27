@@ -125,7 +125,7 @@ class ApolloMapping(Pipeline):
             )
         elif self.species == "aspergillus_fumigatus":
             self.reference = Path(
-                #"/mnt/db/apollo/mapping/aspergillus_fumigatus/CEA10.fasta"
+                # "/mnt/db/apollo/mapping/aspergillus_fumigatus/CEA10.fasta"
                 "/mnt/db/apollo/mapping/aspergillus_fumigatus/GCF_000002655_1.fna"
             )
 
