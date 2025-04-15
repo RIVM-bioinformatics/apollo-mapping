@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.3...v0.4.4) (2025-03-27)
+
+
+### Bug Fixes
+
+* added new reference genome for aspergillus fumigatus ([68afc76](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/68afc766d4642e602fccf13b576744904db491e6))
+
 ## [0.4.3](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.2...v0.4.3) (2024-06-03)
 
 
