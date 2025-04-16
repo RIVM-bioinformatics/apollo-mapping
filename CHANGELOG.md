@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.4...v0.4.5) (2025-04-16)
+
+
+### Bug Fixes
+
+* update juno library ([7b756dc](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/7b756dc6cc362df3a02fe25283ce349cc84d3994))
+
 ## [0.4.4](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.3...v0.4.4) (2025-03-27)
 
 
