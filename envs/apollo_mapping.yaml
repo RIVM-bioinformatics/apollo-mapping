@@ -13,5 +13,6 @@ dependencies:
   - python=3.11.*
   - zstandard=0.19.0
   - zstd=1.5.2
+  - setuptools=79.0.1
   - pip:
     - "--editable=git+https://github.com/RIVM-bioinformatics/juno-library.git@v2.2.2#egg=juno_library"
