@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.5...v0.4.6) (2025-05-06)
+
+
+### Bug Fixes
+
+* Add setuptools v.79.0.1 dependency to yaml ([7b118b2](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/7b118b2f97ec4886320fb88b58087a169d46ed6e))
+
 ## [0.4.5](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.4...v0.4.5) (2025-04-16)
 
 
