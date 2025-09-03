@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.7](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.6...v0.4.7) (2025-09-03)
+
+
+### Bug Fixes
+
+* changing ref genome to latest clade 1 genome ([cb97df0](https://github.com/RIVM-bioinformatics/apollo-mapping/commit/cb97df0d66eb9aa65b653110e9cbbc0998f4cb34))
+
 ## [0.4.6](https://github.com/RIVM-bioinformatics/apollo-mapping/compare/v0.4.5...v0.4.6) (2025-05-06)
 
 
