@@ -118,10 +118,10 @@ class ApolloMapping(Pipeline):
             self.time_limit = 300
 
         # select a reference based on species:
-        # self.ref_dir = "/mnt/db/apollo/mapping/"
+        # self.ref_dir = "/mnt/db/apollo/mapping/" 
         if self.species == "candida_auris":
             self.reference = Path(
-                "/mnt/db/apollo/mapping/candida_auris/GCF_003013715.1.fasta"
+                "/mnt/db/apollo/mapping/candida_auris/GCA_002759435_3_genomic.fna"
             )
         elif self.species == "aspergillus_fumigatus":
             self.reference = Path(
