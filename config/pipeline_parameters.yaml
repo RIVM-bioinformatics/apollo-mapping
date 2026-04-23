@@ -12,6 +12,7 @@ threads:
     fastp: 4
     multiqc: 1
     bbtools: 1
+    deeptools: 1
 
 mem_gb:
     call_variants: 32
@@ -27,3 +28,4 @@ mem_gb:
     fastp: 8
     multiqc: 8
     bbtools: 6
+    deeptools: 8

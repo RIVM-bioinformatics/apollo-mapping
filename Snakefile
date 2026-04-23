@@ -33,13 +33,15 @@ include: "workflow/rules/qc_mapping.smk"
 include: "workflow/rules/qc_variant_calling.smk"
 include: "workflow/rules/call_variants.smk"
 include: "workflow/rules/multiqc.smk"
+include: "workflow/rules/filter_variants.smk"
 
 
 rule all:
     input:
-        expand(OUT + "/variants/{sample}.vcf", sample=SAMPLES),
-        expand(OUT + "/variants/snps/{sample}.snps.vcf", sample=SAMPLES),
-        OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
-        OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
-        OUT + "/multiqc/multiqc.html",
-        OUT + "/qc_variant_calling/report_allelefreq_multiallelic.tsv",
+        expand(OUT + "/variants/raw/{sample}.vcf", sample=SAMPLES),
+        # expand(OUT + "/variants/snps/{sample}.snps.vcf", sample=SAMPLES),
+        expand(OUT + "/variants/coverage_tracks/{sample}.bw", sample=SAMPLES),
+        # OUT + "/qc_mapping/bbtools/bbtools_scaffolds.tsv",
+        # OUT + "/qc_mapping/bbtools/bbtools_summary_report.tsv",
+        # OUT + "/multiqc/multiqc.html",
+        # OUT + "/qc_variant_calling/report_allelefreq_multiallelic.tsv",
