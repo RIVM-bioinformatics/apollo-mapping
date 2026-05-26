@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling","hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "apollo_mapping"
+requires-python = ">=3.10"
+dynamic = ["optional-dependencies"]
+#dynamic = ["version"] # see ViroConstrictor. Get from <package>/__init__.py
+# chore: apollo_mapping/version.py might become superfluous, so port all that is needed to here
+description = "Apollo mapping pipeline, intended for reference mapping analysis of fungal genomes (supported by apollo-reference)"
+version = "0.5.0"
+readme = "README.md"
+# TODO: /tmp/pip-build-env-6509pjql/.../_apply_pyprojecttoml.py:82:
+#       SetuptoolsDeprecationWarning: `project.license` as a TOML table is deprecated
+license = {text = "AGPLv3"}
+authors = [
+    { name = "Roxanne Wolthuis" },
+    { name = "Boas van der Putten" },
+    { name = "Sofie Hofman" },
+    { name = "Ate van der Burgt" },
+    { email = "ids-bioinformatics@rivm.nl" },
+]
+
+dependencies = [
+    # define here all installable python-code repo's (that are not on PyPI)
+    "juno-library @ git+https://github.com/RIVM-bioinformatics/juno-library.git@feature/installable",
+    # TODO: need to pin version, but currently main is only branch which includes co-packaged config/referencedata.yaml
+    #"apollo-reference @ git+https://github.com/RIVM-bioinformatics/apollo-reference.git@v0.1.1",
+    "apollo-reference @ git+https://github.com/RIVM-bioinformatics/apollo-reference.git",
+
+    # TODO: refactor: rivm-idsbioinfo-argparse-utils into a stand-alone repo
+    #"rivm-idsbioinfo-argparse-utils @ git+https://github.com/RIVM-bioinformatics/rivm-idsbioinfo-argparse-utils.git@v0.1.1",
+    #"biovalid @ git+https://github.com/RIVM-bioinformatics/biovalid.git@biovalid-v0.5.0"
+]
+
+# mode of operation/interaction with this repo
+[dependency-groups]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    #"zstandard==0.19.0",  # SEE envs/apollo_mapping.yaml
+    #"zstd==1.5.2",        # SEE envs/apollo_mapping.yaml
+]
+dev = [
+    { include-group = "test" },
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+# defined strictly pythonic requirements
+[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
+vanilla = ["requirements.txt"]
+
+[tool.hatch.env]
+requires = ["hatch-conda", "hatch-requirements-txt"]
+
+[tool.hatch.envs.default]
+features = ["vanilla"] # hook to loose requirement.txt + depencenies with git repos
+python = "3.10"
+environment-file = "envs/apollo_mapping.yaml"
+type = "conda"
+pre-install-commands = [
+    "echo 'initializing pre-install-commands [default]...'",
+    ## read-only, non-installable repo (files need to be present)
+    "rm -rf {root}/juno_mapping",
+    "git clone --depth 1 --branch v0.4.7 https://github.com/RIVM-bioinformatics/juno-mapping.git {root}/juno_mapping",
+    # optionally, install "generic" pythonic requirements from {root}/juno_mapping/requirements.txt"
+
+    # TODO: refactor: rivm-idsbioinfo-argparse-utils into a stand-alone repo
+    "python -m pip install -r {root}/rivm_idsbioinfo_argparse_utils/requirements.txt",
+]
+
+[tool.hatch.envs.test]
+dependency-groups = ["test"]
+# no custom pre-install-commands needed
+#matrix = [
+#  { python = ["3.10", "3.11", "3.12"] }
+#]
+
+[tool.hatch.envs.dev]
+dependency-groups = ["dev"]
+pre-install-commands = [
+    "echo 'initializing pre-install-commands [dev]...'",
+    # SCENARIO 0: Test a local repo or branch prior to commit.
+    "rm -rf {root}/ci-tools",
+    "cp -r /home/avdb/gitrepos/bicbio-ci-templates {root}/ci-tools",
+    # use "python -m pip" to guarantee environment's python & pip is used
+    "python -m pip install -r {root}/ci-tools/requirements.txt",
+    ###"python -m pip install -e {root}/ci-tools",
+]

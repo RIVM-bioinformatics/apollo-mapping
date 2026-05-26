@@ -1,0 +1,2 @@
+# momentarily, explicitly no apollo-mapping **specific** requirements.
+# All are defined by those defined in [project.dependencies]
