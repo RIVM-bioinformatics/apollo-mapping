@@ -62,7 +62,27 @@ conda activate apollo_mapping
 python3 apollo_mapping.py -i [input] -o [output] -s [species]
 ```
 
+6. Alternative install using micromamba
+```
+## install micromamba if not installed yet
+curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | sudo tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
+
+## connect micromamba to current bash shell
+eval "$(micromamba shell hook --shell bash)"
+
+# or, permanently connect micromamba to bash shell
+## micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
+
+git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
+cd apollo-mapping
+micromamba create -n apollo-mapping -f envs/apollo_mapping.yaml
+micromamba activate apollo-mapping
+
+```
+
+
 ## Parameters & Usage
+
 ### Command for help
 * ```-h, --help``` Shows the help of the pipeline
 
@@ -88,14 +108,45 @@ python3 apollo_mapping.py -i [input] -o [output] -s [species]
 * ```--reference``` Reference genome to use default is chosen based on species argument, defaults per species can be found in: /mnt/db/apollo/mapping/[species]
 * ```--db-dir``` Kraken2 database directory (should include fungi!)                 
 
-### The base command to run this program. 
+### The base command(s) to run this program. 
 ```
-python3 apollo-mapping.py -i [dir/to/fasta_or_fastq_files] -s [species] 
-```
+# Get a detailed and explained overview of basic pipeline usage
 
-### An example on how to run the pipeline.
-```
-python3 apollo-mapping.py -i [dir/to/fasta_or_fastq_files] -o [/path/to/output/location] -s aspergillus_fumigatus 
+python3 apollo-mapping.py -h 
+
+# Get a detailed overview of currently supported (fungal) species
+
+python3 apollo-mapping.py --help-species
+
+# Get some brief examples on how to parameterize input for custom reference data
+
+python3 apollo-mapping.py --help-customrefs
+
+# Minimal example on how to run the pipeline (on a/the cluster):
+
+python3 apollo-mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/location]  
+
+# Minimal example(s) on how to run locally:
+
+python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/location]
+    --local --no-containers --skip-kraken --species candida_auris
+    --snakemake-args "cores=1" "nodes=1"
+
+python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/location]
+    --local --no-containers --skip-kraken --skip-reference-selection --species candida_auris
+    --snakemake-args "cores=1" "nodes=1"
+
+python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/location]
+    --local --no-containers --skip-kraken --custom-reference /path/to/external.fa
+    --snakemake-args "cores=1" "nodes=1"
+
+
+
+- Pipeline can be run on a local machine, but expects considerable resources
+- For full performance, some additional database files should me made available (e.g. kraken database)
+- Make sure you've write permission in designated output dirs.
+- Preferably, know a little bit on snakemake (in order to paralellize and thereby speedup your workflow)
+
 ```
 
 Detailed information about the pipeline can be found in the [documentation](link to other docs). This documentation is only suitable for users that have access to the RIVM Linux environment.
