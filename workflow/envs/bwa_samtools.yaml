@@ -3,4 +3,4 @@ channels:
 - conda-forge
 dependencies:
 - bwa==0.7.17
-- samtools==1.17
+- samtools   # both failed! 1.17, ==1.16.1 # changed to https://github.com.mcas.ms/RIVM-bioinformatics/juno-mapping/blob/main/workflow/envs/bwa_samtools.yaml

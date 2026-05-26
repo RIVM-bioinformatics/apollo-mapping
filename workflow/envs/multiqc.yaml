@@ -1,7 +1,8 @@
 name: multiqc
 channels:
+  - conda-forge # Needed for dependencies of multiqc
   - bioconda
-  - conda-forge 
   - defaults
 dependencies:
-    - multiqc==1.14
+  - multiqc==1.34
+  # newest version by today ==1.19 # 1.14; updated from https://github.com.mcas.ms/RIVM-bioinformatics/juno-mapping/blob/main/workflow/envs/multiqc.yaml

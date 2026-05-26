@@ -14,7 +14,8 @@ rule clean_fastq:
         "../envs/qc_and_clean.yaml"
     container:
         "docker://biocontainers/fastp:v0.20.1_cv1"
-    threads: config["threads"]["fastp"]
+    threads:
+        config["threads"]["fastp"]
     resources:
         mem_gb=config["mem_gb"]["fastp"],
     log:
@@ -43,7 +44,6 @@ fastp --in1 {input.r1} \
 --length_required {params.min_length} > {log} 2>&1
         """
 
-
 rule qc_raw_fastq:
     input:
         lambda wildcards: SAMPLES[wildcards.sample][wildcards.read],
@@ -65,7 +65,7 @@ rule qc_raw_fastq:
         OUT + "/log/qc_raw_fastq/qc_raw_fastq_{sample}_{read}.log",
     shell:
         """
-bash bin/fastqc_wrapper.sh {input} {params.output_dir} {output.html} {output.zip} {log} > {log} 2>&1
+bash {scripts_path}/fastqc_wrapper.sh {input} {params.output_dir} {output.html} {output.zip} {log} > {log} 2>&1
         """
 
 
@@ -81,7 +81,8 @@ rule qc_clean_fastq:
         "../envs/qc_and_clean.yaml"
     container:
         "docker://biocontainers/fastqc:v0.11.9_cv8"
-    threads: config["threads"]["fastqc"]
+    threads:
+        config["threads"]["fastqc"]
     resources:
         mem_gb=config["mem_gb"]["fastqc"],
     log:
@@ -96,4 +97,45 @@ rule qc_clean_fastq:
         else  
             touch {output}
         fi
+        """
+
+
+
+
+rule multiqc_fastqc:
+    # TODO: multiqc report based on results on fastq analyses only
+    input:
+        expand(
+            OUT + "/qc_clean_fastq/{sample}_p{read}_fastqc.zip",
+            sample=SAMPLES,
+            read="R1 R2".split(),
+        ),
+        expand(
+            OUT + "/clean_fastq/{sample}_fastp.json",
+            sample=SAMPLES,
+        )
+    output:
+        OUT + "/multiqc/fastqc/multiqc.html",
+        phred=OUT + "/multiqc/fastqc/multiqc_data/multiqc_data.json",
+        seq_len=OUT + "/multiqc/fastqc/multiqc_data/multiqc_fastqc.txt",
+    message:
+        "Generating multiqc report"
+    log:
+        OUT + "/log/multiqc/multiqc.log",
+    threads:
+        config["threads"]["multiqc"]
+    conda:
+        "../envs/multiqc.yaml"
+    container:
+        "docker://quay.io/biocontainers/multiqc:1.14--pyhdfd78af_0"
+    params:
+        config_file="config/multiqc_config_base.yaml",
+        output_dir=OUT + "/multiqc/fastqc",
+    resources:
+        mem_gb=config["mem_gb"]["multiqc"],
+    shell:
+        """
+        multiqc --interactive --force --config {params.config_file} \
+        -o {params.output_dir} \
+        -n multiqc.html {input} &> {log}
         """
