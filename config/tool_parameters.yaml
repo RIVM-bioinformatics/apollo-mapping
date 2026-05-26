@@ -1,0 +1,16 @@
+---
+# module::rule (hardcoded) non-vanilla parameters; typically rules direct only a single tool
+map_clean_reads:
+  bwa_mem:
+    bases_per_batch: 100000000
+    verbosity: 3
+    softclip_supp_aln: '-Y'
+  MarkDuplicates:
+    VALIDATION_STRINGENCY: 'SILENT'
+    OPTICAL_DUPLICATE_PIXEL_DISTANCE: 2500
+    ASSUME_SORT_ORDER: 'queryname'
+    CLEAR_DT: 'false'
+    ADD_PG_TAG_TO_READS: 'false'
+identify_impurity_using_kraken:
+  identify_impurity:
+    kraken_db: '/mnt/db/apollo/kraken_db_apollo'
