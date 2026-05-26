@@ -1,0 +1,21 @@
+# apollo-mapping specific ignores
+.snakemake
+samtools.*.tmp.*.bam
+ci-tools/
+ci-tools
+juno_mapping/
+juno_mapping
+apollo_reference/
+apollo_reference
+
+# juno-pipeline specific ignores:
+# TODO: refactor: moved juno-library Pipeline specific dependencies to juno-library/.gitignore-runjunopipeline
+envs/src
+input
+output
+config/variables.yaml
+config/juno_call.txt
+core.*
+config/sample_sheet.yaml
+config/user_parameters.yaml
+.java
