@@ -5,7 +5,11 @@ rule bwa_mem:
         r2=OUT + "/clean_fastq/{sample}_pR2.fastq.gz",
         ref=MultiReferenceProvider.get_ref_path,
         # "fake" input needed for DAG construction (and bwa index files should exist)
-        idx = lambda wildcards: MultiReferenceProvider.get_ref_path(wildcards) + ".sa",
+        #idx = lambda wildcards: MultiReferenceProvider.get_ref_path(wildcards) + ".sa",
+        idx_bwa = lambda wildcards: MultiReferenceProvider.get_ref_path(wildcards) + ".sa",
+        idx_fal = lambda wildcards: MultiReferenceProvider.get_ref_path(wildcards) + ".fal",
+        idx_fai = lambda wildcards: MultiReferenceProvider.get_ref_path(wildcards) + ".fai",
+        idx_bed = lambda wildcards: MultiReferenceProvider.get_ref_path(wildcards) + ".bed",
     output:
         #sam=temp(OUT + "/mapped_reads/raw/{ref_type}/{sample}.sam"),
         sam=OUT + "/mapped_reads/raw/{ref_type}/{sample}.sam",
