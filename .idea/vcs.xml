@@ -2,8 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/apollo_reference" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/base_juno_pipeline" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ci-tools" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/envs/src/juno-library" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/juno_mapping" vcs="Git" />
