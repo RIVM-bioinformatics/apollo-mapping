@@ -97,4 +97,4 @@ rule fai_to_bed:
     resources:
         mem_gb=config["mem_gb"]["other"],
     shell:
-        """ cut -f 1-2 {input} | awk '{ OFS="\t"; print $1,0,$2 }' 2> {log} > {output} """
+        """ cut -f 1-2 {input} | awk '{{ OFS="\t"; print $1,0,$2 }}' 2> {log} > {output} """
