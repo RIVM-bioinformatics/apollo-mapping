@@ -625,6 +625,12 @@ class ApolloMapping(Pipeline):
             help="skip, if applicable, the strain-specific mapping+variant calling on the designated strain (from a multiclade group)"
         )
 
+        label_notimplemented_arg(skip_tool_group.add_argument)(
+            "--trigger-multiclade-masking-workflow",
+            action="store_true",
+            default=False,
+            help="trigger the custom workflow that performs the analyses that generated files representing blacklisted regions for variant calling in multi-clade mode"
+        )
 
         label_notimplemented_arg(skip_tool_group.add_argument)(
             "--trigger-assembly",
