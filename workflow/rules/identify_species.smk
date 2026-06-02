@@ -4,8 +4,9 @@ if config.get("skip_reference_selection",None) == "False":
     # vanilla: minimap2 --> match_ref --> assign_reference
     rule minimap2:
         input:
-            # Realize match-ref is not critically depending for cleaned fastq data.
+            # Realize match-ref is not critically depending on cleaned fastq data.
             # Avdb prefers to do match-ref on "raw" fastq data (although that might be a personal choice ...)
+            # In case this is decided on differently, change to clean_fastq/ data as input
             #r1=OUT + "/clean_fastq/{sample}_pR1.fastq.gz",
             #r2=OUT + "/clean_fastq/{sample}_pR2.fastq.gz",
             r1=lambda wildcards: SAMPLES[wildcards.sample]["R1"],
@@ -25,7 +26,7 @@ if config.get("skip_reference_selection",None) == "False":
         shell:
             """
     minimap2 -ax sr {input.index} {input.r1} {input.r2} > {output.sam}
-           """
+            """
 
     rule match_ref:
         input:
@@ -39,7 +40,7 @@ if config.get("skip_reference_selection",None) == "False":
         params:
             prefix=OUT + "/reference/{sample}",
         message:
-            "identify species using apollo-reference/match-ref.py for sample {wildcards.sample}"
+            "identify species using apollo-match-reference for sample {wildcards.sample}"
         #conda:
         #    "../envs/bwa_samtools.yaml"
         #container:
@@ -52,8 +53,8 @@ if config.get("skip_reference_selection",None) == "False":
             mem_gb=8    #config["mem_gb"]["other"],
         shell:
             """
-    /home/avdb/gitrepos/apollo-reference/code/match-ref.py {input.sam} {params.prefix} 2>&1>{log}
-           """
+    apollo-match-reference {input.sam} {params.prefix} 2>&1>{log}
+            """
 
     # !important!
     CONDITIONAL_TARGETS += rules.minimap2.output
@@ -69,10 +70,10 @@ if config.get("species_reference",None) not in (None,"None"):
         params:
             outdir=OUT + "/reference",
             prefix=OUT + "/reference/{sample}",
+            # overtake those user-specified to CLI entry point apollo_mapping.py
             species_reference=config["species_reference"],
             clade_reference=config["clade_reference"],
             exterior_fasta=config["exterior_fasta"],
-            match_ref="/home/avdb/gitrepos/apollo-reference/code/match-ref.py"
         message:
             "set enforced reference species using apollo-reference/match-ref.py for sample {wildcards.sample}"
         output:
@@ -82,7 +83,7 @@ if config.get("species_reference",None) not in (None,"None"):
             OUT + "/log/identify_species/forced-ref_{sample}.log",
         run:
             cmd_create_dir="mkdir -p {params.outdir}; "
-            cmd="""{params.match_ref} {params.prefix} --species-reference {params.species_reference}"""
+            cmd="""apollo-match-reference {params.prefix} --species-reference {params.species_reference}"""
             if params.clade_reference not in (None,"None"):
                 cmd+= " --clade-reference {params.clade_reference}"
             if params.exterior_fasta == "True":
