@@ -19,7 +19,7 @@ import re
 import pandas as pd
 from tabulate import tabulate
 from dataclasses import dataclass, field
-from typing import Union, Optional, List, TYPE_CHECKING
+from typing import Union, Optional, List, Literal, TYPE_CHECKING
 # TODO chore: deprecate version.py file ?
 from version import __package_name__, __version__
 
@@ -622,14 +622,7 @@ class ApolloMapping(Pipeline):
             "--skip-multiclade-strain-mapping",
             action="store_true",
             default=False,
-            help="skip, if applicable, the strain-specific mapping+variant calling on the designated strain (from a multiclade group)"
-        )
-
-        label_notimplemented_arg(skip_tool_group.add_argument)(
-            "--trigger-multiclade-masking-workflow",
-            action="store_true",
-            default=False,
-            help="trigger the custom workflow that performs the analyses that generated files representing blacklisted regions for variant calling in multi-clade mode"
+            help="skip, if applicable, the strain-specific mapping+variant-calling on the designated strain (from a multiclade group)"
         )
 
         label_notimplemented_arg(skip_tool_group.add_argument)(
@@ -640,9 +633,9 @@ class ApolloMapping(Pipeline):
         )
 
         argument_group = self.parser.add_argument_group('Particular use-case options')
-        ISO_group = argument_group.add_mutually_exclusive_group(required=False)
+        preset_workflow_group = argument_group.add_mutually_exclusive_group(required=False)
 
-        ISO_group.add_argument(
+        preset_workflow_group.add_argument(
             "--ISO",
             action="store_true",
             dest="ISO",
@@ -650,12 +643,19 @@ class ApolloMapping(Pipeline):
             help="Fallback to ISO-certified part(s) of the pipeline"
         )
 
-        ISO_group.add_argument(
+        preset_workflow_group.add_argument(
             "--ISO-Cauris",
             action="store_true",
             dest="ISO_Cauris",
             default=False,
             help="Fallback to ISO-certified part(s) of the pipeline for C.auris (and disallow non-compatible arguments)"
+        )
+
+        label_notimplemented_arg(preset_workflow_group.add_argument)(
+            "--trigger-multiclade-masking-workflow",
+            action="store_true",
+            default=False,
+            help="trigger the custom workflow that performs the analyses that generated files representing blacklisted regions for variant calling in multi-clade mode"
         )
 
 
@@ -790,6 +790,12 @@ class ApolloMapping(Pipeline):
             ( 'forced_clade', 'skip_multiclade_strain_mapping' ),
             ( 'custom_clade_fasta', 'skip_multiclade_strain_mapping' ),
             ( 'custom_reference_fasta', 'skip_multiclade_strain_mapping' ),
+            # --trigger-multiclade-masking-workflow presets these to True
+            ( 'trigger_multiclade_masking_workflow', 'skip_kraken'),
+            ( 'trigger_multiclade_masking_workflow', 'skip_reference_selection'),
+            ( 'trigger_multiclade_masking_workflow', 'skip_multiclade_strain_mapping'),
+            # --trigger-multiclade-masking-workflow can't combine with these
+            ( 'trigger_multiclade_masking_workflow', 'custom_reference_fasta'),
         ]
 
         # Namespace attributes both required when being used
@@ -801,6 +807,15 @@ class ApolloMapping(Pipeline):
             ( 'custom_reference_fasta', 'custom_reference_mitochondrion_accessions' ),
             ( 'custom_clade_fasta', 'custom_clade_mitochondrion_fasta' ),
             ( 'custom_clade_fasta', 'custom_clade_mitochondrion_accessions' ),
+            # --trigger-multiclade-masking-workflow required a --species!
+            # Here, one could argue it requires a --clade.
+            # However, please consider the case of one is **considering** the upgrade
+            # form a (vanilla) singleclade reference into a multiclade reference.
+            # In that case the `multiclade masking workflow` could prove the
+            # perfect measure to indicate if this is meaningful.
+            # So, to avoid the "chicken-or-egg" dogma, it's best to allow
+            # triggering this workflow from a (single) --species
+            ( 'forced_species', 'trigger_multiclade_masking_workflow' ),
         ]
 
         for _first, _second in argparse_mutual_exclusive_pairs:
@@ -824,7 +839,30 @@ class ApolloMapping(Pipeline):
                 msg = "conditionally required: %s needs %s" % (_second_option,_first_option)
                 self.parser.error(msg)
 
-        # re'validate' default value for kraken.db_dir
+        # preset handling. Some flags act as "presets", modulating many other flags
+        if args.ISO or [ k for k,v in args.__dict__.items() if k.startswith("ISO_") and v == True ] != []:
+            # in the scenario of --ISO(-species) flags, disallow most other flags to be defined
+            assigned_args = []
+            assigned_args.extend([ k for k, v in args.__dict__.items() if k.find("_reference_") > 0 and v not in (False,None) ])
+            assigned_args.extend([ k for k, v in args.__dict__.items() if k.find("skip_") == 0 and v not in (False,None) ])
+            assigned_args.extend([ k for k, v in args.__dict__.items() if k.find("trigger_") == 0 and v not in (False,None) ])
+            if assigned_args != []:
+                msg = f"--ISO and --ISO<-species> don't allow other pipeline-modifying arguments to be set {assigned_args}"
+                self.parser.error(msg)
+            # here, hardcoded preset --ISO required parameterization / Namespace attributes
+            args.whatever = 100
+            if args.ISO_Cauris:
+                # hard-coded parameterization of analyses of C.auris clade samples
+                pass
+        elif args.trigger_multiclade_masking_workflow:
+            # Preset to multiclade masking workflow
+            # Disables the standard QC/surveillance, and heads directly to relevant parts
+            args.skip_kraken = True
+            args.skip_reference_selection = True
+            args.skip_multiclade_strain_mapping = True
+
+
+        # re'validate' in order to get default value for kraken.db_dir
         args.db_dir = validate_kraken_db(args.db_dir)
 
         if args.db_dir == None and not args.skip_kraken:
@@ -835,38 +873,10 @@ class ApolloMapping(Pipeline):
             msg = "--skip_reference_selection requires one of -s/-a/-c/--clg/--custom-reference"
             self.parser.error(msg)
 
-        elif args.custom_reference_fasta and args.custom_reference_mitochondrion_accessions:
-            # TODO validate that args.custom_reference_mitochondrion_accessions occur in this fasta
-            status = are_accessions_present_in_fasta(args.custom_reference_fasta,args.custom_reference_mitochondrion_accessions,warn=True)
-            if not status:
-                msg = "some --custom-reference-mitochondrion-accessions not found in fasta"
-                self.parser.error(msg)
-
-        elif args.custom_reference_fasta and args.custom_reference_mitochondrion_fasta:
-            # TODO validate that accession(s) in args.custom_reference_mitochondrion_fasta don't occur in this fasta
-            if args.custom_reference_fasta == args.custom_reference_mitochondrion_fasta:
-                msg = "--custom-reference and --custom-reference-mitochondrion-fasta are the same!"
-                self.parser.error(msg)
-            status = are_no_accession_overlap_in_fasta(args.custom_reference_fasta,args.custom_reference_mitochondrion_fasta,warn=True)
-            if not status:
-                msg = "accession overlap in --custom-reference and --custom-reference-mitochondrion-accessions"
-                self.parser.error(msg)
-
         elif args.extra_reference_fasta:
             # TODO validate that accession(s) in extra_reference_fasta don't occur in vanilla reference-tsv database
             # this is rather tricky: at this point in time, we've no access yet to the species selection database
             raise NotImplementedError("args.extra_reference_fasta")
-
-        # in the scenario of --ISO(-species) flags, disallow most other flags to be defined
-        elif args.ISO or [ k for k,v in args.__dict__.items() if k.startswith("ISO_") and v == True ] != []:
-            assigned_reference_args = [ k for k, v in args.__dict__.items() if k.find("_reference_") > 0 and v not in (False,None) ]
-            if assigned_reference_args != []:
-                msg = f"--ISO and --ISO<-species> don't allow other pipeline-modifying arguments to be set {assigned_reference_args}"
-                self.parser.error(msg)
-            args.whatever = 100
-            if args.ISO_Cauris:
-                # hard-coded parameterization of analyses of C.auris clade samples
-                pass
 
         # all combinations validated successfully!
         return True
@@ -915,6 +925,28 @@ class ApolloMapping(Pipeline):
         else:
             return False
 
+    def do_custom_reference_validation(self, args=argparse.Namespace) -> bool:
+        """ custom validation in case of --custom-reference concerning mitochondrial fasta/accessions """
+        if args.custom_reference_fasta:
+            if args.custom_reference_mitochondrion_accessions:
+                # TODO validate that args.custom_reference_mitochondrion_accessions occur in this fasta
+                status = are_accessions_present_in_fasta(args.custom_reference_fasta,args.custom_reference_mitochondrion_accessions,warn=True)
+                if not status:
+                    msg = "some --custom-reference-mitochondrion-accessions not found in fasta"
+                    self.parser.error(msg)
+            elif args.custom_reference_mitochondrion_fasta:
+                # TODO validate that accession(s) in args.custom_reference_mitochondrion_fasta don't occur in this fasta
+                if args.custom_reference_fasta == args.custom_reference_mitochondrion_fasta:
+                    msg = "--custom-reference and --custom-reference-mitochondrion-fasta are the same!"
+                    self.parser.error(msg)
+                status = are_no_accession_overlap_in_fasta(args.custom_reference_fasta,args.custom_reference_mitochondrion_fasta,warn=True)
+                if not status:
+                    msg = "accession overlap in --custom-reference and --custom-reference-mitochondrion-accessions"
+                    self.parser.error(msg)
+            return True
+        else:
+            return False
+
     def do_exterior_fasta_argument_transformation(self,args=argparse.Namespace) -> bool:
         """ redefine some arguments in the scenario of externally provided reference data """
         import warnings
@@ -924,15 +956,12 @@ class ApolloMapping(Pipeline):
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
-        # extra dataclass attributes of ApolloPipeline
+        # extra dataclass attributes of ApolloPipeline (assigned at a later stage)
         self.identify_species_index: Optional[Path] = None
         self.forced_species: Optional[str] = None
         self.forced_clade: Optional[str] = None
         self.species_reference: Optional[Path] = None
         self.clade_reference: Optional[Path] = None
-        self.skip_reference_selection: Optional[bool] = args.__dict__['skip_reference_selection']
-        self.skip_multiclade_strain_mapping: Optional[bool] = args.__dict__['skip_multiclade_strain_mapping']
-        self.exterior_fasta: Optional[bool] = args.__dict__['custom_reference_fasta'] != None
 
         # TODO: handle mitochondrial accessions "somewhere"
         # - we can read from the "validate_apollo_reference" dataframe --> dict config
@@ -944,10 +973,17 @@ class ApolloMapping(Pipeline):
         self.validate_apollo_reference(args)
         self.do_combinatorial_argument_validation(args)
         self.do_forced_s_a_c_clg_argument_transformation(args)
+        self.do_custom_reference_validation(args)
         self.do_exterior_fasta_argument_transformation(args)
 
+        # extra dataclass attributes of ApolloPipeline (assigned here)
         self.kraken_db_dir: Path = args.db_dir
-        # tool-specific parameter configuration
+        self.skip_reference_selection: Optional[bool] = args.__dict__['skip_reference_selection']
+        self.skip_multiclade_strain_mapping: Optional[bool] = args.__dict__['skip_multiclade_strain_mapping']
+        self.trigger_multiclade_masking_workflow: Optional[bool] = args.__dict__['trigger_multiclade_masking_workflow']
+        self.exterior_fasta: Optional[bool] = args.__dict__['custom_reference_fasta'] != None
+
+        # tool-specific parameter configuration (assigned here)
         self.mean_quality_threshold: int = args.__dict__['ithinkmultiqc.icannotfindthemptflag.mean_quality_threshold']
         self.window_size: int = args.__dict__['map_clean_reads.picard.window_size']
         self.min_read_length: int = args.__dict__['map_clean_reads.picard.minimum_length']
@@ -979,7 +1015,7 @@ class ApolloMapping(Pipeline):
         # self.ref_dir = "/mnt/db/apollo/mapping/"
         # self.species == "candida_auris":
         # self.reference = Path("/mnt/db/apollo/mapping/candida_auris/GCA_002759435_3_genomic.fna")
-        # self.custom_reference = /path/tp/fasta
+        # self.custom_reference = /path/to/fasta
 
         if self.species_reference is not None:
             print(f"# Running pipeline for species '{self.forced_species}' with reference: {self.species_reference}.")
@@ -992,6 +1028,7 @@ class ApolloMapping(Pipeline):
             parameters_dict = yaml.safe_load(f)
         self.snakemake_config.update(parameters_dict)
 
+        # TODO: consider auto-selecting from dir(self) and/or logics in self._parse_args()
         self.user_parameters = {
             "input_dir": str(self.input_dir),
             "output_dir": str(self.output_dir),
@@ -1014,6 +1051,7 @@ class ApolloMapping(Pipeline):
             # main switches that bypass/skip some parts of the snakemake workflow
             "skip_reference_selection": str(self.skip_reference_selection),
             "skip_multiclade_strain_mapping": str(self.skip_multiclade_strain_mapping),
+            "trigger_multiclade_masking_workflow": str(self.trigger_multiclade_masking_workflow),
         }
 
 

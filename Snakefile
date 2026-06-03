@@ -67,6 +67,7 @@ class MultiReferenceProvider:
     SKIP_KRAKEN: bool = config['kraken_db_dir'] == "None"
     SKIP_REFERENCE_SELECTION: bool =  config['skip_reference_selection'] == "True"
     SKIP_MULTICLADE_STRAIN_MAPPING: bool = config['skip_multiclade_strain_mapping'] == "True"
+    TRIGGER_MULTICLADE_MASKING_WORKFLOW: bool = config['trigger_multiclade_masking_workflow'] == "True"
     EXTERIOR_FASTA: bool = config['exterior_fasta'] == "True"
 
     @staticmethod
@@ -211,38 +212,9 @@ class MultiReferenceProvider:
                 continue
         return targets
 
-
-class MultiReferenceProviderConcatSoftclippedInput(MultiReferenceProvider):
-    """ added class method that dynamically generates input for per-clade softclip concatenation """
-    @classmethod
-    def get_concat_softclip_targets(cls, wildcards) -> List[str]:
-        """ return a list of 'rule all' mapping specs target results for species (and additional strain-specific mappings) """
-
-        def fill_template_outfiles(sample:str,ref_type:str) -> List[str]:
-            outfile_templates = [
-                f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.access-softclipped.bg"
-                ]
-            return outfile_templates
-
-        return cls._get_rule_all_targets_given_templates(fill_template_outfiles)
-
-    @classmethod
-    def get_softclip_workflow_targets(cls, wildcards) -> List[str]:
-        """ return a list of 'rule all' mapping specs target results for the multiclade softclip-analyses (sub)workflow """
-        def fill_template_outfiles(sample:str,ref_type:str) -> List[str]:
-            outfile_templates = [
-                f"{OUT}/softclipped/multiclade.{ref_type}-softclipped.bg",
-                f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.access-softclipped.bw",
-                f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.softclipped.bw",
-                f"{OUT}/coverage/{ref_type}/{sample}.genome.bw",
-                ]
-            return outfile_templates
-
-        return cls._get_rule_all_targets_given_templates(fill_template_outfiles)
-
-
 include: "workflow/rules/identify_species.smk"
 include: "workflow/rules/generate_reference_indices.smk"
+# !important! realize rule itself is configured to act on --skip-kraken
 include: "workflow/rules/identify_impurity_using_kraken.smk"
 
 if True:
@@ -259,10 +231,27 @@ else:
 # mapping part of the pipeline
 include: "workflow/rules/map_clean_reads.smk"
 
-# multiclade-analyses part of the pipeline
-# TODO: define an argument in apollo_mapping.y that disables this
-#       will become --trigger-multiclade-masking-workflow
-include: "workflow/rules/identify_softclipped_regions.smk"
+if MultiReferenceProvider.TRIGGER_MULTICLADE_MASKING_WORKFLOW:
+    # trigger the multiclade masking workflow
+    class MultiReferenceProviderConcatSoftclippedInput(MultiReferenceProvider):
+        """ added class method that dynamically generates input for per-clade softclip concatenation """
+        @classmethod
+        def get_all_mapping_targets(cls, wildcards) -> List[str]:
+            """ extend this classmethod take these additional all_mapping_targets """
+            targets = super().get_all_mapping_targets(wildcards)
+            def fill_template_outfiles(sample:str,ref_type:str) -> List[str]:
+                outfile_templates = [
+                    f"{OUT}/softclipped/multiclade.{ref_type}-softclipped.bg",
+                    f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.access-softclipped.bw",
+                    f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.softclipped.bw",
+                    f"{OUT}/coverage/{ref_type}/{sample}.genome.bw",
+                    ]
+                return outfile_templates
+            return targets + cls._get_rule_all_targets_given_templates(fill_template_outfiles)
+
+    # overrule MultiReferenceProvider to become the augmented one
+    MultiReferenceProvider = MultiReferenceProviderConcatSoftclippedInput
+    include: "workflow/rules/identify_softclipped_regions.smk"
 
 # !imporant! rule all is needed BEFORE:
 # - include workflow/rules/qc_mapping.smk, which imports juno-mapping/workflow/rules/qc_mapping.smk
@@ -275,8 +264,6 @@ rule all:
         #expand(OUT + "/reference/{sample}-samtools-stats.tsv", sample=SAMPLES),
         #expand(OUT + "/reference/{sample}-references.yml", sample=SAMPLES),
         MultiReferenceProvider.get_all_mapping_targets,
-
-        MultiReferenceProviderConcatSoftclippedInput.get_softclip_workflow_targets,
 
         # temporarily set fastqc pipeline to output targets
         expand(OUT + "/qc_raw_fastq/{sample}_{read}_fastqc.html", sample=SAMPLES.keys(), read=["R1", "R2"]),

@@ -170,7 +170,11 @@ use rule bedgraph_to_bigwig_base as bedgraph_to_bigwig_access_softclipped with:
 
 rule concatenate_softclipped_to_bed:
     input:
-        MultiReferenceProviderConcatSoftclippedInput.get_concat_softclip_targets
+        lambda wildcards: expand(
+            OUT + "/softclipped-{ref_type}/{sample}.{ref_type}.access-softclipped.bg",
+            sample=SAMPLES,
+            ref_type=wildcards.ref_type
+        )
     output:
         OUT + "/softclipped/multiclade.{ref_type}-softclipped.bed"
     log:

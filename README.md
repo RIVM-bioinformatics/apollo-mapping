@@ -140,12 +140,22 @@ python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/locatio
     --local --no-containers --skip-kraken --custom-reference /path/to/external.fa
     --snakemake-args "cores=1" "nodes=1"
 
-
-
 - Pipeline can be run on a local machine, but expects considerable resources
 - For full performance, some additional database files should me made available (e.g. kraken database)
 - Make sure you've write permission in designated output dirs.
 - Preferably, know a little bit on snakemake (in order to paralellize and thereby speedup your workflow)
+
+# Example for multiclade masking (sub)worflow
+
+input=/home/avdb/RIVM/data-apollo-reference/test-fastq-input-cauris-clades
+output=/home/avdb/RIVM/output-cauris-clades
+python3 apollo_mapping.py -i $input -o $output \
+    --local --no-containers \
+    --trigger-multiclade-masking-workflow \
+    --species candida_auris \
+    --snakemake-args "cores=1" "nodes=1" --dryrun
+
+
 
 ```
 
