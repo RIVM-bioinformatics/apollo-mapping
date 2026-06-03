@@ -36,23 +36,10 @@ localrules:
     assign_reference,
     copy_reference_species_genomes,
     copy_reference_strain_genomes,
-    # these will be warned upon in snakemake output:
+    # Realize these two below will often trigger this message in Snakemake:
     # "localrules directive specifies rules that are not present in the Snakefile:"
     copy_external_species_genome,
     copy_external_strain_genome
-
-if False:
-            def get_final_strain_outputs(wildcards):
-                final_files = []
-                for sample in SAMPLES:
-                    # Check de checkpoint output voor elk sample
-                    check_path = checkpoints.match_ref.get(sample=sample).output.reference
-                    with open(check_path) as f:
-                        data = yaml.safe_load(f)
-                        # Voeg alleen een target toe als er een strain is
-                        if data.get("strain"):
-                            final_files.append(OUT + f"/reference/{sample}__strain__just_checking_if_it_works.txt")
-                return final_files
 
 
 class MultiReferenceProvider:
@@ -61,6 +48,7 @@ class MultiReferenceProvider:
     Core purpose is to:
         - keep each (PE) fastq connected to its designated reference assembly
         - keep each (PE) fastq connected to its designated reference and strain assembly (if applicable)
+        - keep track, given the above, what
     """
 
     # some config/variables that are best placed here (too)
@@ -144,22 +132,11 @@ class MultiReferenceProvider:
             ref_type = "species"
             targets.extend(fill_template_outfiles_function(sample,ref_type))
             try:
-                ## Take into account if checkpoint has been passed already
-                #result = checkpoints.match_ref.get(sample=sample).output.reference
-                #if os.path.exists(result):
-                #    with open(result) as f:
-                #        data = yaml.safe_load(f)
-                #        if data.get("strain"):
-                #            ref_type = "strain"
-                 #           targets.extend(fill_template_outfiles_function(sample,ref_type))
-
                 # Take into account if checkpoint has been passed already
                 data = cls.get_yaml_content(sample)
                 if data.get("strain"):
                     ref_type = "strain"
                     targets.extend(fill_template_outfiles_function(sample,ref_type))
-
-
 
             except (snakemake.exceptions.IncompleteCheckpointException, KeyError):
                 # Snakemake will re-evaluate after checkpoint has been passed
@@ -167,50 +144,13 @@ class MultiReferenceProvider:
         return targets
 
     @classmethod
-    def get_all_mapping_targets(cls, wildcards) -> List[str]:
+    def get_rule_all_targets(cls, wildcards) -> List[str]:
         """ return a list of 'rule all' target results for species and additional strain-specific mappings """
-
         def fill_template_outfiles(sample:str,ref_type:str):
-            #outfile_template = "{OUT}/mapped_reads/{sample}/{ref_type}/done.txt.sorted.bam"
-            #outfile_template = f"{OUT}/mapped_reads/raw/{ref_type}/{sample}.sam"
-            #outfile_template = f"{OUT}/mapped_reads/sorted/{ref_type}/{sample}.bam"
-            #outfile_template = f"{OUT}/mapped_reads/duprem/{ref_type}/{sample}.bam.bai"
             outfile_template = f"{OUT}/qc_mapping/insertsize/{sample}__{ref_type}_metrics.txt"
             return [ outfile_template ]
 
-        #print("WILDCARDS:",wildcards)
         return cls._get_rule_all_targets_given_templates(fill_template_outfiles)
-
-        # !!important !! REFACTORED
-
-        for sample in SAMPLES:
-            # all samples are mapped to their corresponding "species" reference
-            # !important! this is the crucial ref_type wildcard variable to discriminate species/strains
-            ref_type = "species"
-            targets.extend(fill_template_outfiles())
-            try:
-                # Take into account if checkpoint has been passed already
-                #result = checkpoints.match_ref.get(sample=sample).output.reference
-                #if os.path.exists(result):
-                #    with open(result) as f:
-                #        data = yaml.safe_load(f)
-                #        if data.get("strain"):
-                #            ref_type = "strain"
-                #            targets.extend(fill_template_outfiles())
-
-                # Take into account if checkpoint has been passed already
-                data = cls.get_yaml_content(sample)
-                if data.get("strain"):
-                    ref_type = "strain"
-                    targets.extend(fill_template_outfiles())
-
-
-
-
-            except (snakemake.exceptions.IncompleteCheckpointException, KeyError):
-                # Snakemake will re-evaluate after checkpoint has been passed
-                continue
-        return targets
 
 include: "workflow/rules/identify_species.smk"
 include: "workflow/rules/generate_reference_indices.smk"
@@ -236,9 +176,9 @@ if MultiReferenceProvider.TRIGGER_MULTICLADE_MASKING_WORKFLOW:
     class MultiReferenceProviderConcatSoftclippedInput(MultiReferenceProvider):
         """ added class method that dynamically generates input for per-clade softclip concatenation """
         @classmethod
-        def get_all_mapping_targets(cls, wildcards) -> List[str]:
-            """ extend this classmethod take these additional all_mapping_targets """
-            targets = super().get_all_mapping_targets(wildcards)
+        def get_rule_all_targets(cls, wildcards) -> List[str]:
+            """ extend this classmethod take these additional rule all targets """
+            targets = super().get_rule_all_targets(wildcards)
             def fill_template_outfiles(sample:str,ref_type:str) -> List[str]:
                 outfile_templates = [
                     f"{OUT}/softclipped/multiclade.{ref_type}-softclipped.bg",
@@ -263,14 +203,11 @@ rule all:
         #expand(OUT + "/reference/{sample}-match-ref-taxid.tsv", sample=SAMPLES),
         #expand(OUT + "/reference/{sample}-samtools-stats.tsv", sample=SAMPLES),
         #expand(OUT + "/reference/{sample}-references.yml", sample=SAMPLES),
-        MultiReferenceProvider.get_all_mapping_targets,
+        MultiReferenceProvider.get_rule_all_targets,
 
         # temporarily set fastqc pipeline to output targets
         expand(OUT + "/qc_raw_fastq/{sample}_{read}_fastqc.html", sample=SAMPLES.keys(), read=["R1", "R2"]),
-        #expand(OUT + "/identify_species/{sample}/{sample}.skipped-or-not.txt", sample=SAMPLES.keys()),
         expand(OUT + "/clean_fastq/{sample}_fastp.json", sample=SAMPLES.keys()),
-        #OUT + "/multiqc/fastqc/multiqc.html",
-        #OUT + "/multiqc/mapping/multiqc.html",
         OUT + "/multiqc/multiqc.html",
 
 
