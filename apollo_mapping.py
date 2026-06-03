@@ -956,6 +956,13 @@ class ApolloMapping(Pipeline):
     def _parse_args(self) -> argparse.Namespace:
         args = super()._parse_args()
 
+        # pipeline configuration
+        self.time_limit: int = args.time_limit
+
+        # keep track of instance attributes being added;
+        # DRY solution for explicit (re)stating self.user_params in cls.setup()
+        self._ADDED_ATTRIBUTES: set = set(dir(self))
+
         # extra dataclass attributes of ApolloPipeline (assigned at a later stage)
         self.identify_species_index: Optional[Path] = None
         self.forced_species: Optional[str] = None
@@ -988,9 +995,11 @@ class ApolloMapping(Pipeline):
         self.window_size: int = args.__dict__['map_clean_reads.picard.window_size']
         self.min_read_length: int = args.__dict__['map_clean_reads.picard.minimum_length']
 
-        # pipeline configuration
-        self.time_limit: int = args.time_limit
-
+        # update to attributes being added
+        self._ADDED_ATTRIBUTES.symmetric_difference_update(dir(self))
+        self._ADDED_ATTRIBUTES.difference_update(['_ADDED_ATTRIBUTES'])
+        print(self._ADDED_ATTRIBUTES)
+        print(len(self._ADDED_ATTRIBUTES))
 
         return args
 
@@ -1010,13 +1019,6 @@ class ApolloMapping(Pipeline):
         if self.time_limit < 300:
             self.time_limit = 300
 
-        # DEPRECATED attributes (old Apollo pipeline with hard-coded references cauris and aspfum
-        # select a reference based on species:
-        # self.ref_dir = "/mnt/db/apollo/mapping/"
-        # self.species == "candida_auris":
-        # self.reference = Path("/mnt/db/apollo/mapping/candida_auris/GCA_002759435_3_genomic.fna")
-        # self.custom_reference = /path/to/fasta
-
         if self.species_reference is not None:
             print(f"# Running pipeline for species '{self.forced_species}' with reference: {self.species_reference}.")
         if self.clade_reference is not None:
@@ -1028,31 +1030,28 @@ class ApolloMapping(Pipeline):
             parameters_dict = yaml.safe_load(f)
         self.snakemake_config.update(parameters_dict)
 
-        # TODO: consider auto-selecting from dir(self) and/or logics in self._parse_args()
+        # TODO: consider placing all-pileline shared user_params in parental class
         self.user_parameters = {
             "input_dir": str(self.input_dir),
             "output_dir": str(self.output_dir),
             "exclusion_file": str(self.exclusion_file),
-            "mean_quality_threshold": int(self.mean_quality_threshold),
-            "window_size": int(self.window_size),
-            "min_read_length": int(self.min_read_length),
             "use_singularity": str(self.snakemake_args["use_singularity"]),
             "time-limit": str(self.time_limit),
-            # selected or provided custom references (paths and names)
-            "species_reference": str(self.species_reference),
-            "clade_reference": str(self.clade_reference),
-            "forced_species": str(self.forced_species),
-            "forced_clade": str(self.forced_clade),
-            "exterior_fasta": str(self.exterior_fasta),
-            # database paths
-            "reference_genomes_dir": str(os.path.join(CONFIG['apollo_reference_db_dir'],"refs")),
-            "identify_species_index": str(self.identify_species_index),
-            "kraken_db_dir": str(self.kraken_db_dir),
-            # main switches that bypass/skip some parts of the snakemake workflow
-            "skip_reference_selection": str(self.skip_reference_selection),
-            "skip_multiclade_strain_mapping": str(self.skip_multiclade_strain_mapping),
-            "trigger_multiclade_masking_workflow": str(self.trigger_multiclade_masking_workflow),
         }
+
+        # this-pipeline specific parameters that can't get one-on-one getattr(ibuted)
+        self.user_parameters.update({
+            # multireference database path
+            "reference_genomes_dir": str(os.path.join(CONFIG['apollo_reference_db_dir'], "refs")),
+        })
+
+        # overtake those listed in self._ADDED_ATTRIBUTES
+        # !important int to explicit int, all other to explicit str (even bools)
+        for attr in self._ADDED_ATTRIBUTES:
+            if str(getattr(self,attr)).isdigit():
+                self.user_parameters[attr] = int(getattr(self,attr))
+            else:
+                self.user_parameters[attr] = str(getattr(self,attr))
 
 
 if __name__ == "__main__":
