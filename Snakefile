@@ -161,12 +161,18 @@ if True:
     # fastq cleaning & summarizing stats on it
     include: "workflow/rules/clean_fastq.smk"
 else:
+    # TODO: dissect rule sort_paired_fastq in juno-mapping, we don't need neither want it in apollo-mapping
+    # TODO: once done, apollo-mapping can inherit these rules from juno-mapping
     # fastq cleaning & summarizing stats on it
     include: "juno_mapping/workflow/rules/fastqc_raw_data.smk"
     include: "juno_mapping/workflow/rules/fastqc_clean_data.smk"
-    # TODO: dissect rule sort_paired_fastq in juno-mapping, we don't need neither want it in apollo-mapping
     include: "juno_mapping/workflow/rules/clean_fastq.smk"
 
+# ------------------------------------------------------------------------------------------------------ #
+# !important!   Realize that from this point onwards, the DAG will branch (in a multi-clade scenario).
+#               In will map on "species" and it will map on "clade", which is handled by
+#               the helper class MultiReferenceProvider.
+# ------------------------------------------------------------------------------------------------------ #
 
 # mapping part of the pipeline
 include: "workflow/rules/map_clean_reads.smk"
