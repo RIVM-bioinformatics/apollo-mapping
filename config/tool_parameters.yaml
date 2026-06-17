@@ -1,5 +1,8 @@
 ---
-# module::rule (hardcoded) non-vanilla parameters; typically rules direct only a single tool
+# strong recommendation:
+# - specify all (hardcoded) non-default parameters here
+# - crucially important to state the default values for pipeline-entrypoint reconfigureable parameters here
+# - naming convention: module:rule:param_name
 map_clean_reads:
   bwa_mem:
     bases_per_batch: 100000000
@@ -14,3 +17,9 @@ map_clean_reads:
 identify_impurity_using_kraken:
   identify_impurity:
     kraken_db: '/mnt/db/apollo/kraken_db_apollo'
+freebayes:
+  # TODO: refactor to module:rule:param_name
+  ploidy: 2
+  haplotype_length: 3     #default value, cwz value is 0
+  min_repeat_size: 5      #default value, cwz value is 0
+  min_repeat_entropy: 1   #default value, cwz value is 0
