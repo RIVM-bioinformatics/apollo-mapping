@@ -1,7 +1,8 @@
 # This now calls variants with ploidy 2
 # Otherwise, it is not able to detect heterozygosity
 # Run this standard with ploidy 2? Or do another check prior to this to check heteroyzgysogity?
-rule call_variants:
+
+rule freebayes:
     input:
         bam=OUT + "/mapped_reads/duprem/{sample}.bam",
         ref=OUT + "/reference/reference.fasta",
@@ -13,10 +14,10 @@ rule call_variants:
     message:
         "Calling variants for {wildcards.sample}",
     params:
-        ploidy=config["Freebayes"]["ploidy"],
-        haplotype_length=config["Freebayes"]["haplotype_length"],
-        min_repeat_size=config["Freebayes"]["min_repeat_size"], 
-        min_repeat_entropy=config["Freebayes"]["min_repeat_entropy"], 
+        ploidy=config["freebayes"]["ploidy"],
+        haplotype_length=config["freebayes"]["haplotype_length"],
+        min_repeat_size=config["freebayes"]["min_repeat_size"],
+        min_repeat_entropy=config["freebayes"]["min_repeat_entropy"],
     conda:
         "../envs/freebayes.yaml"
     container:
