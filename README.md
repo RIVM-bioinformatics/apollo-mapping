@@ -30,7 +30,19 @@ The pipeline uses the following tools(NOT COMPLETE):
 * (mini)conda
 * Python 3.11
 
-## Installation
+
+## Installation (using hatch)
+```bash
+git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
+cd apollo-mapping
+pip install --user hatch 
+pip install --user hatch-conda
+hatch env create
+hatch shell
+```
+
+
+## Installation (the conda way)
 1. Clone the repository.
 ```
 git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
@@ -62,7 +74,7 @@ conda activate apollo_mapping
 python3 apollo_mapping.py -i [input] -o [output] -s [species]
 ```
 
-6. Alternative install using micromamba
+6. Alternative install (using micromamba)
 ```
 ## install micromamba if not installed yet
 curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | sudo tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
