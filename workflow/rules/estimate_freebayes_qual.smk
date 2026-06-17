@@ -3,6 +3,9 @@ include: "map_clean_reads.smk"
 include: "generate_reference_indices.smk"
 include: "call_variants.smk"
 
+# Python Imports
+from pathlib import Path
+
 # Variables concerning the simulated genome;
 # In case you adjust these, please make sure all divisions yield integers, not floats!
 SIMULATED_GENOME_NT_SIZE=100000
@@ -65,39 +68,31 @@ rule mason_variator:
 
 # Helper functions to parse required, single-value parameters from larger input file
 
-from pathlib import Path
-def _parse_metrics_block(filepath:Path) -> dict:
+def _parse_picard_metrics_block(filepath:Path,at_max_num_lines:int=100) -> dict:
     """ parse the ## METRICS CLASS block from a Picard result file """
     with filepath.open(mode="r",encoding="utf-8") as f:
-        for line in f.readlines():
-            if line.startswith("## METRICS CLASS"):
+        lineId: int = 0
+        while True:
+            line = f.readline().strip()
+            lineId+=1
+            if lineId >= at_max_num_lines:
+                break
+            elif line.startswith("## METRICS CLASS"):
                 keys = f.readline().strip().split("\t")
                 vals = f.readline().strip().split("\t")
                 break
     data = dict(zip(keys,vals))
     return data
 
-
 def get_dynamic_param_read_length(wildcards, input):
     """ """
-    data = _parse_metrics_block(input._data_for_read_length)
-    return int(data['MEAN_ALIGNED_READ_LENGTH'])
-
-    with open(input._data_for_read_length, "r") as f:
-        # parse METRICS CLASS block
-        for line in f.readlines():
-            if line.startswith("## METRICS CLASS"):
-                keys = f.readline().strip().split("\t")
-                vals = f.readline().strip().split("\t")
-                break
-        data = dict(zip(keys,vals))
-        return int(data['MEAN_ALIGNED_READ_LENGTH'])
+    data = _parse_picard_metrics_block(Path(input._data_for_read_length))
+    return int(float(data['MEAN_ALIGNED_READ_LENGTH']))
 
 def get_dynamic_param_read_depth(wildcards, input):
     """ """
-    data = _parse_metrics_block(input._data_for_read_length)
+    data = _parse_picard_metrics_block(Path(input._data_for_read_depth))
     return int(data['MEDIAN_COVERAGE'])
-
 
 rule_name="mason_simulator"
 rule mason_simulator:
@@ -111,8 +106,8 @@ rule mason_simulator:
         R2 = OUT + "/simulated/data/{sample}_on_{ref_type}_reads_R2.fq"
     params:
         length_genome=SIMULATED_GENOME_NT_SIZE,
-        read_length=150, #get_dynamic_param_read_length,
-        depth=50, #get_dynamic_param_read_depth,
+        read_length=get_dynamic_param_read_length,
+        depth=get_dynamic_param_read_depth
     conda:
         "../envs/mason.yaml"
     message:
