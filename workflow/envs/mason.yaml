@@ -1,0 +1,6 @@
+name: mason
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - mason==2.0.13

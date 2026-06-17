@@ -49,9 +49,9 @@ from rivm_idsbioinfo_argparse_utils.formats.fasta import (
 
 # configuration. read from various files from apollo-reference and apollo-mapping tool_parameters.yaml
 APOLLO_REFERENCE_CONFIG_YAML = os.path.join(apollo_reference.__path__[0],"config","referencedata.yaml")
-TOOL_PARAMS_YAML = os.path.join(os.path.dirname(__file__),"config","tool_parameters.yaml")
+TOOL_PARAMS_YAML = yaml.safe_load(open(Path(__file__).parent.joinpath("config/tool_parameters.yaml")))
 REFERENCE_DATA_DIR = yaml.safe_load(open(APOLLO_REFERENCE_CONFIG_YAML))['reference_data_dir']
-KRAKEN_DB_DIR = yaml.safe_load(open(TOOL_PARAMS_YAML))['identify_impurity_using_kraken']['identify_impurity']['kraken_db']
+KRAKEN_DB_DIR = TOOL_PARAMS_YAML['identify_impurity_using_kraken']['identify_impurity']['kraken_db']
 
 CONFIG = {
     'kraken_db': Path(KRAKEN_DB_DIR),
@@ -998,11 +998,7 @@ class ApolloMapping(Pipeline):
         # update to attributes being added
         self._ADDED_ATTRIBUTES.symmetric_difference_update(dir(self))
         self._ADDED_ATTRIBUTES.difference_update(['_ADDED_ATTRIBUTES'])
-        print(self._ADDED_ATTRIBUTES)
-        print(len(self._ADDED_ATTRIBUTES))
-
         return args
-
 
     def setup(self) -> None:
         super().setup()
@@ -1024,11 +1020,10 @@ class ApolloMapping(Pipeline):
         if self.clade_reference is not None:
             print(f"# Running pipeline for species '{self.forced_species}' with clade: {self.clade_reference}.")
 
-        with open(
-            Path(__file__).parent.joinpath("config/pipeline_parameters.yaml")
-        ) as f:
-            parameters_dict = yaml.safe_load(f)
-        self.snakemake_config.update(parameters_dict)
+        # load snakemake configuration from tool_parameters.yaml and pipeline_parameters.yaml
+        for _yaml in ("config/tool_parameters.yaml","config/pipeline_parameters.yaml"):
+            params_dict = yaml.safe_load(open(Path(__file__).parent.joinpath(_yaml)))
+            self.snakemake_config.update(params_dict)
 
         # TODO: consider placing all-pileline shared user_params in parental class
         self.user_parameters = {

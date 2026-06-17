@@ -12,6 +12,7 @@ scripts_path = os.path.join(workflow_path, "scripts")
 # Otherwise files with the same extension in subdirs match as well
 wildcard_constraints:
     sample="[^\/]+",
+    ref_type="(species|strain)"
 
 
 sample_sheet = config["sample_sheet"]
@@ -147,8 +148,15 @@ class MultiReferenceProvider:
     def get_rule_all_targets(cls, wildcards) -> List[str]:
         """ return a list of 'rule all' target results for species and additional strain-specific mappings """
         def fill_template_outfiles(sample:str,ref_type:str):
-            outfile_template = f"{OUT}/qc_mapping/insertsize/{sample}__{ref_type}_metrics.txt"
-            return [ outfile_template ]
+            # TODO: once pipeline development has finished
+            #       only the truely final exterior leaves of the DAG needs to get specified
+            #outfile_template = f"{OUT}/qc_mapping/insertsize/{sample}__{ref_type}_metrics.txt"
+            #return [ outfile_template ]
+            outfile_templates = [
+                f"{OUT}/qc_mapping/insertsize/{sample}__{ref_type}_metrics.txt",
+                f"{OUT}/simulated/data/{sample}_on_{ref_type}_priors.yaml"
+            ]
+            return outfile_templates
 
         return cls._get_rule_all_targets_given_templates(fill_template_outfiles)
 
@@ -178,7 +186,7 @@ else:
 include: "workflow/rules/map_clean_reads.smk"
 
 if MultiReferenceProvider.TRIGGER_MULTICLADE_MASKING_WORKFLOW:
-    # trigger the multiclade masking workflow
+    """ trigger the multiclade masking workflow; adds some targets to rule_all """
     class MultiReferenceProviderConcatSoftclippedInput(MultiReferenceProvider):
         """ added class method that dynamically generates input for per-clade softclip concatenation """
         @classmethod
@@ -217,8 +225,16 @@ rule all:
         OUT + "/multiqc/multiqc.html",
 
 
-# (multi)QC part of the pipeline
+
+# EOF mapping part of the pipeline with (multi)QC
 include: "workflow/rules/qc_mapping.smk"
+
+# variant calling part of the pipeline
+# !important! realize MultiReferenceProvider in case of multi-clade analyses
+include: "workflow/rules/call_variants.smk"
+include: "workflow/rules/estimate_freebayes_qual.smk"
+
+# completion part of the pipeline
 include: "workflow/rules/multiqc.smk"
 
 
