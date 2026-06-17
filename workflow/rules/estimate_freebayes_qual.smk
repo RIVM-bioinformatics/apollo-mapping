@@ -129,7 +129,7 @@ rule mason_simulator:
         """
 
 # ----------------------------------------------------------------------------------------
-# required indices (inherited rules only)
+# required indices (mostly inherited rules)
 # ----------------------------------------------------------------------------------------
 
 rule_name="est_qual_bwa_index"
@@ -155,6 +155,26 @@ use rule samtools_faidx_ref as est_qual_samtools_faidx_ref with:
         OUT + "/log/simulated/" + rule_name + ".log"
     message:
         "Indexing reference genome [samtools faidx]: "+ SIMULATED_GENOME_FNAME
+
+rule_name="bcftools_bgzip_index_vcf"
+rule bcftools_bgzip_index_vcf:
+    input:
+        SIMULATED_GENOME_PREFIX + "-mutated.vcf"
+    output:
+        vcf_gz = SIMULATED_GENOME_PREFIX + "-mutated.vcf.gz",
+        vcf_csi = SIMULATED_GENOME_PREFIX+ "-mutated.vcf.gz.csi"
+    log:
+        OUT + "/log/simulated/" + rule_name + ".log"
+    message:
+        "Bgzip and index VCF file: "+ SIMULATED_GENOME_FNAME
+    container:
+        "docker://staphb/bcftools:1.16"
+    conda:
+        "../envs/bcftools.yaml"
+    shell:
+        """
+        bcftools view  {input} -O z -o {output.vcf_gz}; bcftools index {output.vcf_gz};
+        """
 
 # ----------------------------------------------------------------------------------------
 # per-sample analyses
@@ -213,10 +233,23 @@ use rule freebayes as est_qual_freebayes with:
     message:
         "Call variants using freebayes {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
 
+rule_name="est_qual_freebayes_bgzip_index_vcf"
+use rule bcftools_bgzip_index_vcf as est_qual_freebayes_bgzip_index_vcf with:
+    input:
+        OUT + "/simulated/data/{sample}_on_{ref_type}.vcf"
+    output:
+        vcf_gz = OUT + "/simulated/data/{sample}_on_{ref_type}.vcf.gz",
+        vcf_csi = OUT + "/simulated/data/{sample}_on_{ref_type}.vcf.gz.csi"
+    log:
+        OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
+    message:
+        "Bgzip and index VCF file from {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
+
 rule_name="est_qual_filter_vcf"
 rule est_qual_filter_vcf:
     input:
-        OUT + "/simulated/data/{sample}_on_{ref_type}.vcf"
+        vcf_freebayes = OUT + "/simulated/data/{sample}_on_{ref_type}.vcf.gz",
+        vcf_mutations = SIMULATED_GENOME_PREFIX + "-mutated.vcf.gz",
     output:
         OUT + "/simulated/data/{sample}_on_{ref_type}_filtered.vcf"
     log:
@@ -228,10 +261,15 @@ rule est_qual_filter_vcf:
     conda:
         "../envs/bcftools.yaml"
     shell:
+        ## realize this filter that "discards highly unlikely SNPs" is not stringent enough
+        #bcftools filter  -i 'INFO/AF >= 0.10' {input} | bcftools view -v snps  -o  {output}
+        ## realize that there is occurence of False Negative SNPs:
+        ## - occurring in  input.vcf_mutations
+        ## - not called in input.vcf_freebayes
+        ## - in the few tested cases so far, FN% can be 1-2%, mostly in less deep sequenced dataset
         """
-        bcftools filter  -i 'INFO/AF >= 0.10' {input} | bcftools view -v snps  -o  {output}
+        bcftools view -T {input.vcf_mutations} {input.vcf_freebayes} | bcftools view -v snps -o {output}
         """
-
 
 rule_name="est_qual_median_and_stdv"
 rule est_qual_median_and_stdv:
@@ -249,6 +287,6 @@ rule est_qual_median_and_stdv:
         "../envs/python_pandas_env.yaml"
     shell:
         """
-        # don't use bcftools view -H {input}; saves the dependancy of bcftools + python
+        ## don't use bcftools view -H {input}; saves the dependancy of bcftools + python
         grep -v "^#" {input}  | cut -f 6 | python workflow/scripts/array2nsmmmmsd.py >  {output}
         """
