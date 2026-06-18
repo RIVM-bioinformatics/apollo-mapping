@@ -25,7 +25,6 @@ SIMULATED_GENOME_FNAME = SIMULATED_GENOME_PREFIX + ".fa"
 from snakemake.rules import Rule
 
 CONDA_ENV_MASON = "../envs/mason.yaml"
-CONDA_ENV_MASON = "../envs/mason.yaml"
 
 def apply_mason_rule_defaults(rule_obj:Rule) -> None:
     """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
