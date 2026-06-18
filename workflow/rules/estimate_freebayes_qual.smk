@@ -18,6 +18,29 @@ _sfx = str(SIMULATED_GENOME_NUM_SCAFS)+"x"+str(SIMULATED_GENOME_SCAF_SIZE_KB)+"k
 SIMULATED_GENOME_PREFIX = OUT + "/simulated/genome-"+ _sfx
 SIMULATED_GENOME_FNAME = SIMULATED_GENOME_PREFIX + ".fa"
 
+# ------------------------------------------------------------------------------------------------ #
+# base rules "applied by function" (can't define 'conda:' in base rule is "use rule X as Y with:")
+# ------------------------------------------------------------------------------------------------ #
+
+from snakemake.rules import Rule
+
+CONDA_ENV_MASON = "../envs/mason.yaml"
+CONDA_ENV_MASON = "../envs/mason.yaml"
+
+def apply_mason_rule_defaults(rule_obj:Rule) -> None:
+    """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
+    rule_obj.threads = config["threads"]["other"]
+    rule_obj.resources = {"mem_gb": config["mem_gb"]["other"]}
+    rule_obj.conda = CONDA_ENV_MASON
+    rule_obj.container = "" #"docker://PATH/TO/MASON/CONTAINER:<PINNEDVERSION>"
+
+def apply_bcftools_rule_defaults(rule_obj:Rule) -> None:
+    """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
+    rule_obj.threads = config["threads"]["other"]
+    rule_obj.resources = {"mem_gb": config["mem_gb"]["other"]}
+    rule_obj.conda = "../envs/bcftools.yaml"
+    rule_obj.container = "" #"docker://PATH/TO/MASON/CONTAINER:<PINNEDVERSION>"
+
 # ----------------------------------------------------------------------------------------
 # SeQan / mason: generate a simulated minified genome and simulated PE reads from it
 # ----------------------------------------------------------------------------------------
@@ -29,10 +52,12 @@ rule mason_genome:
     params:
         length_genome=SIMULATED_GENOME_NT_SIZE,
         length_scaf=SIMULATED_GENOME_SCAF_SIZE,
-    conda:
-        "../envs/mason.yaml"
     log:
         OUT + "/log/simulated/" + rule_name + ".log"
+    conda:
+        # !important! snakemake inspects rules upon initialization for which conda envs to build
+        #             so, in the first "mason" rule, specify it explicitly.
+        CONDA_ENV_MASON
     shell:
         """
         # create a 100kb genome, consisting of 2 scaffolds
@@ -40,6 +65,8 @@ rule mason_genome:
         sed 's/^>/>scaf/' {output} > {output}.patched;
         mv {output}.patched {output};
         """
+
+apply_mason_rule_defaults(rules.mason_genome)
 
 rule_name="mason_variator"
 rule mason_variator:
@@ -64,6 +91,8 @@ rule mason_variator:
           -of {output.fa} \
           --snp-rate {params.snp_rate}
         """
+
+apply_mason_rule_defaults(rules.mason_variator)
 
 
 # Helper functions to parse required, single-value parameters from larger input file
@@ -128,6 +157,8 @@ rule mason_simulator:
             -iv {input.vcf};
         """
 
+apply_mason_rule_defaults(rules.mason_simulator)
+
 # ----------------------------------------------------------------------------------------
 # required indices (mostly inherited rules)
 # ----------------------------------------------------------------------------------------
@@ -167,14 +198,12 @@ rule bcftools_bgzip_index_vcf:
         OUT + "/log/simulated/" + rule_name + ".log"
     message:
         "Bgzip and index VCF file: "+ SIMULATED_GENOME_FNAME
-    container:
-        "docker://staphb/bcftools:1.16"
-    conda:
-        "../envs/bcftools.yaml"
     shell:
         """
         bcftools view  {input} -O z -o {output.vcf_gz}; bcftools index {output.vcf_gz};
         """
+
+apply_bcftools_rule_defaults(rules.bcftools_bgzip_index_vcf)
 
 # ----------------------------------------------------------------------------------------
 # per-sample analyses
@@ -256,10 +285,6 @@ rule est_qual_filter_vcf:
         OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
     message:
         "Filter variants using bcftools {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
-    container:
-        "docker://staphb/bcftools:1.16"
-    conda:
-        "../envs/bcftools.yaml"
     shell:
         ## realize this filter that "discards highly unlikely SNPs" is not stringent enough
         #bcftools filter  -i 'INFO/AF >= 0.10' {input} | bcftools view -v snps  -o  {output}
@@ -271,6 +296,9 @@ rule est_qual_filter_vcf:
         bcftools view -T {input.vcf_mutations} {input.vcf_freebayes} | bcftools view -v snps -o {output}
         """
 
+apply_bcftools_rule_defaults(rules.est_qual_filter_vcf)
+
+
 rule_name="est_qual_median_and_stdv"
 rule est_qual_median_and_stdv:
     input:
@@ -281,10 +309,12 @@ rule est_qual_median_and_stdv:
         OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
     message:
         "Write median and stdv of VCF quality score to yaml from {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
-    container:
-        "docker://staphb/bcftools:1.16"
     conda:
         "../envs/python_pandas_env.yaml"
+    threads:
+        config["threads"]["other"]
+    resources:
+        mem_gb=config["mem_gb"]["other"],
     shell:
         """
         ## don't use bcftools view -H {input}; saves the dependancy of bcftools + python
