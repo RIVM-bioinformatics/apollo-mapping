@@ -1,0 +1,9 @@
+name: curve_fitting.yaml
+channels:
+- bioconda
+- conda-forge
+dependencies:
+- pyBigWig==0.3.25
+- scipy==1.17.1
+- numpy==2.4.3
+- plotly==6.6.0
