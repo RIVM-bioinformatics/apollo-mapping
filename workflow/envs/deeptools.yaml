@@ -1,0 +1,6 @@
+name: deeptools.yaml
+channels:
+- bioconda
+- conda-forge
+dependencies:
+- deeptools=3.5.6

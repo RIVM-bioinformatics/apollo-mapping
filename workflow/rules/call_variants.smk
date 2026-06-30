@@ -37,3 +37,22 @@ freebayes \
 {input.bam} >{output.vcf} 2>{log}
         """
 
+# rule seperate_multiallelic_variants:
+#     input:
+#         vcf=OUT + "/variants/raw/{sample}.vcf",
+#         reference = OUT + "/reference/reference.fasta"
+#     output:
+#         vcf=OUT + "/variants/raw/{sample}_seperated.vcf"
+#     message:
+#         "Seperating multiallelic variants into SNPs for {wildcards.sample}"
+#     conda:
+#         "../envs/bcftools.yaml"
+#     container:
+#         "docker://quay.io/biocontainers/bcftools:1.17--h5b9cfc9_0",
+#     threads: config["threads"]["filter_variants"]
+#     resources:
+#         mem_gb=config["mem_gb"]["filter_variants"],
+#     log:
+#         OUT + "/log/seperate_variants/separate_multiallelic_variants_{sample}.log"
+#     shell:
+#         """bcftools norm -m -any --atomize -f {input.reference} {input.vcf} -O -v {output.vcf}"""
