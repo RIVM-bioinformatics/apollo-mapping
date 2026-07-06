@@ -356,9 +356,9 @@ rule est_cov_bigwigtobedgraph:
     conda:
         "../envs/ucsc_bigwigtobedgraph.yaml"
     threads:
-        config["threads"]["bigwigotbedgraph"]
+        config["threads"]["bigwigtobedgraph"]
     resources:
-        mem_gb=config["mem_gb"]["bigwigotbedgraph"],
+        mem_gb=config["mem_gb"]["bigwigtobedgraph"],
     shell:
         """
         bigWigToBedGraph {input.bigwig} {output.bedgraph}

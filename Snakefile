@@ -158,9 +158,10 @@ class MultiReferenceProvider:
                 f"{OUT}/simulated/data/{sample}_on_{ref_type}_priors_COV.yaml",
                 f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.bai",
                 f"{OUT}/mapped_reads/final/{ref_type}-{sample}-mitochondrial.bam.bai",
-                f"{OUT}/variants/raw/{ref_type}-{sample}.vcf",
-                f"{OUT}/variants/norm/{ref_type}-{sample}.vcf",
-                f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.coverage.bw",
+                #f"{OUT}/variants/raw/{ref_type}-{sample}.vcf",
+                #f"{OUT}/variants/norm/{ref_type}-{sample}.vcf",
+                #f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.coverage.bw",
+                f"{OUT}/variants/filtered/{sample}_on_{ref_type}-filtered.vcf",
             ]
             return outfile_templates
 
@@ -237,7 +238,7 @@ include: "workflow/rules/qc_mapping.smk"
 # !important! realize MultiReferenceProvider in case of multi-clade analyses
 include: "workflow/rules/estimate_freebayes_qual.smk"
 include: "workflow/rules/call_variants.smk"
-#include: "workflow/rules/filter_variants.smk"
+include: "workflow/rules/filter_variants.smk"
 
 # completion part of the pipeline
 include: "workflow/rules/multiqc.smk"

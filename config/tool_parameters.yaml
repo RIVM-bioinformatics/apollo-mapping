@@ -23,3 +23,13 @@ freebayes:
   haplotype_length: 3     #default value, cwz value is 0
   min_repeat_size: 5      #default value, cwz value is 0
   min_repeat_entropy: 1   #default value, cwz value is 0
+filter_variants_species:
+  min-ppf-QUAL: 0.001
+  max-ppf-QUAL: 0.999
+  min-ppf-DP: 0.001
+  max-ppf-DP: 0.999
+filter_variants_strain:
+  min-ppf-QUAL: 0.0005
+  max-ppf-QUAL: 0.9995
+  min-ppf-DP: 0.0005
+  max-ppf-DP: 0.9995

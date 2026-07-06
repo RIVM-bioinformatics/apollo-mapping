@@ -15,7 +15,7 @@ threads:
     bbtools: 1
     deeptools: 1
     # UCSC tool family
-    bigwigotbedgraph: 1
+    bigwigtobedgraph: 1
     bedgraphtobigwig: 1
 
 mem_gb:
@@ -35,5 +35,5 @@ mem_gb:
     bbtools: 6
     deeptools: 8
     # UCSC tool family
-    bigwigotbedgraph: 8
+    bigwigtobedgraph: 8
     bedgraphtobigwig: 8

@@ -590,6 +590,55 @@ class ApolloMapping(Pipeline):
                 help="Minimum length for fastq reads to be kept after trimming.",
             )
 
+        # !important! mind these must be mirrored from/in:
+        #  - workflow/scripts/generate_ppf_table.py (estimate_freebayes_qual.est_qual_distribution_specs)
+        #  - workflow/scripts/generate_ppf_table.py (estimate_freebayes_qual.est_cov_distribution_specs)
+        #  - workflow/scripts/curve_fitting.py
+        SUPPORTED_PPF_TABLE_TH_MIN = (0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05)
+        SUPPORTED_PPF_TABLE_TH_MAX = tuple([1.0 - th for th in reversed(SUPPORTED_PPF_TABLE_TH_MIN)])
+        #SUPPORTED_PPF_TABLE_TH_MAX.append(None)
+
+        for rule_name in ("filter_variants_species","filter_variants_strain"):
+            with self.smkp.tool_context("filter_variants", rule_name):
+                DEFAULTS = TOOL_PARAMS_YAML[rule_name]
+                mappedon = rule_name.split("_")[-1]
+                _snippet_ppf = "value from Percent Point Function (PPF) table derived from observed"
+                _snippet_info = "of mapping on '" + mappedon + "' [ default: %s ]."
+
+                self.smkp.add_param(
+                    "--min-ppf-QUAL-%s" % mappedon,
+                    type=float,
+                    metavar="0.0-1.0",
+                    default=DEFAULTS['min-ppf-QUAL'],
+                    choices=SUPPORTED_PPF_TABLE_TH_MIN,
+                    help="Minimum "+_snippet_ppf+" QUAL score fit " + _snippet_info % DEFAULTS['min-ppf-QUAL'],
+                )
+                self.smkp.add_param(
+                    "--max-ppf-QUAL-%s" % mappedon,
+                    type=float,
+                    metavar="0.0-1.0",
+                    default=DEFAULTS['max-ppf-QUAL'],
+                    choices=SUPPORTED_PPF_TABLE_TH_MAX,
+                    help="Maximum "+_snippet_ppf+" QUAL score fit " + _snippet_info % DEFAULTS['max-ppf-QUAL'],
+                )
+
+                self.smkp.add_param(
+                    "--min-ppf-DP-%s" % mappedon,
+                    type=float,
+                    metavar="0.0-1.0",
+                    default=DEFAULTS['min-ppf-DP'],
+                    choices=SUPPORTED_PPF_TABLE_TH_MIN,
+                    help="Minimum "+_snippet_ppf+" Coverage (DP) score fit " + _snippet_info % DEFAULTS['min-ppf-DP'],
+                )
+                self.smkp.add_param(
+                    "--max-ppf-DP-%s" % mappedon,
+                    type=float,
+                    metavar="0.0-1.0",
+                    default=DEFAULTS['max-ppf-DP'],
+                    choices=SUPPORTED_PPF_TABLE_TH_MAX,
+                    help="Maximum "+_snippet_ppf+" Coverage (DP) score fit " + _snippet_info % DEFAULTS['max-ppf-DP'],
+                )
+
 
     def _add_arguments_tool_skipping(self) -> None:
 
