@@ -890,7 +890,7 @@ class ApolloMapping(Pipeline):
         """
 
         if ( args.forced_species or args.forced_accession or args.forced_clade or args.forced_cladegroup ):
-            # !important! not read_reference_species_df() since we need reference assembly paths
+            # !important! don't read_reference_species_df() since we need reference assembly paths
             df = read_reference_species_and_assembly_df()
             if args.forced_species:
                 # Link back species name corresponding fasta;

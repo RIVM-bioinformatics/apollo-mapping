@@ -154,7 +154,13 @@ class MultiReferenceProvider:
             #return [ outfile_template ]
             outfile_templates = [
                 f"{OUT}/qc_mapping/insertsize/{sample}__{ref_type}_metrics.txt",
-                f"{OUT}/simulated/data/{sample}_on_{ref_type}_priors.yaml"
+                f"{OUT}/simulated/data/{sample}_on_{ref_type}_priors_QUAL.yaml",
+                f"{OUT}/simulated/data/{sample}_on_{ref_type}_priors_COV.yaml",
+                f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.bai",
+                f"{OUT}/mapped_reads/final/{ref_type}-{sample}-mitochondrial.bam.bai",
+                f"{OUT}/variants/raw/{ref_type}-{sample}.vcf",
+                f"{OUT}/variants/norm/{ref_type}-{sample}.vcf",
+                f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.coverage.bw",
             ]
             return outfile_templates
 
@@ -224,15 +230,14 @@ rule all:
         expand(OUT + "/clean_fastq/{sample}_fastp.json", sample=SAMPLES.keys()),
         OUT + "/multiqc/multiqc.html",
 
-
-
 # EOF mapping part of the pipeline with (multi)QC
 include: "workflow/rules/qc_mapping.smk"
 
 # variant calling part of the pipeline
 # !important! realize MultiReferenceProvider in case of multi-clade analyses
-include: "workflow/rules/call_variants.smk"
 include: "workflow/rules/estimate_freebayes_qual.smk"
+include: "workflow/rules/call_variants.smk"
+#include: "workflow/rules/filter_variants.smk"
 
 # completion part of the pipeline
 include: "workflow/rules/multiqc.smk"

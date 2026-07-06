@@ -14,6 +14,9 @@ threads:
     multiqc: 1
     bbtools: 1
     deeptools: 1
+    # UCSC tool family
+    bigwigotbedgraph: 1
+    bedgraphtobigwig: 1
 
 mem_gb:
     call_variants: 32
@@ -31,3 +34,6 @@ mem_gb:
     multiqc: 8
     bbtools: 6
     deeptools: 8
+    # UCSC tool family
+    bigwigotbedgraph: 8
+    bedgraphtobigwig: 8

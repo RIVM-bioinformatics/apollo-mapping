@@ -1,4 +1,11 @@
 # DRY and concise: reuse existing rules to guarantee identical mapping + variant calling settings
+
+# TODO: refactoring to module definition
+#       This silences  "Multiple includes of /home/user/../map_clean_reads.smk ignored
+#       But, this requires the MultiReferenceProvider to be in a separate python helper file (nit in Snakefile)
+#module map_clean_reads:
+#    snakefile: "map_clean_reads.smk"
+
 include: "map_clean_reads.smk"
 include: "generate_reference_indices.smk"
 include: "call_variants.smk"
@@ -205,7 +212,7 @@ rule bcftools_bgzip_index_vcf:
 apply_bcftools_rule_defaults(rules.bcftools_bgzip_index_vcf)
 
 # ----------------------------------------------------------------------------------------
-# per-sample analyses
+# per-sample analyses, resulting in QUAL score "prior" estimations
 # ----------------------------------------------------------------------------------------
 
 rule_name="est_qual_bwa_mem"
@@ -303,11 +310,11 @@ rule est_qual_distribution_specs:
     input:
         OUT + "/simulated/data/{sample}_on_{ref_type}_filtered.vcf"
     output:
-        OUT + "/simulated/data/{sample}_on_{ref_type}_priors.yaml"
+        OUT + "/simulated/data/{sample}_on_{ref_type}_priors_QUAL.yaml"
     log:
         OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
     message:
-        "Write median and stdv of VCF quality score to yaml from {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
+        "Write gaussion fit and PPF table of VCF quality score to yaml from {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
     conda:
         "../envs/python_datascience_basics_env.yaml"
     threads:
@@ -318,6 +325,66 @@ rule est_qual_distribution_specs:
         """
         ## don't use bcftools view -H {input}; saves the dependancy of bcftools + python
         grep -v "^#" {input}  | cut -f 6 | python workflow/scripts/array2nsmmmmsd.py --indented >  {output}
+        mean=$(grep "mean:" {output} | awk '{{ print $2 }}')
+        stdv=$(grep "stdv:" {output} | awk '{{ print $2 }}')
+        python workflow/scripts/generate_ppf_table.py norm $mean $stdv --outstyle yaml --round 2 >>  {output}
+        """
+
+# ----------------------------------------------------------------------------------------
+# per-sample analyses, resulting in WGS coverage "prior" estimations
+# ----------------------------------------------------------------------------------------
+
+rule_name="est_cov_deeptools_bamcoverage"
+# TODO: see "refactoring to module definition"
+#use rule deeptools_bamcoverage from map_clean_reads as est_cov_deeptools_bamcoverage with:
+use rule deeptools_bamcoverage as est_cov_deeptools_bamcoverage with:
+    input:
+        bam = rules.est_qual_sam_to_sorted_bam.output.bam,
+    output:
+        bigwig= str(rules.est_qual_sam_to_sorted_bam.output.bam) + ".coverage.bw"
+    message:
+        "Generating coverage track for {wildcards.sample} mapped on {wildcards.ref_type} [simulated]"
+    log:
+        OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
+
+rule_name="est_cov_bigwigtobedgraph"
+rule est_cov_bigwigtobedgraph:
+    input:
+        bigwig = rules.est_cov_deeptools_bamcoverage.output.bigwig
+    output:
+        bedgraph = temp( str(rules.est_qual_sam_to_sorted_bam.output.bam) + ".coverage.bg" )
+    conda:
+        "../envs/ucsc_bigwigtobedgraph.yaml"
+    threads:
+        config["threads"]["bigwigotbedgraph"]
+    resources:
+        mem_gb=config["mem_gb"]["bigwigotbedgraph"],
+    shell:
+        """
+        bigWigToBedGraph {input.bigwig} {output.bedgraph}
+        """
+
+
+rule_name="est_cov_distribution_specs"
+rule est_cov_distribution_specs:
+    input:
+        rules.est_cov_bigwigtobedgraph.output.bedgraph
+    output:
+        OUT + "/simulated/data/{sample}_on_{ref_type}_priors_COV.yaml"
+    log:
+        OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
+    message:
+        "Write gaussion fit and PPF table of WGS coverage to yaml from {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
+    conda:
+        "../envs/python_datascience_basics_env.yaml"
+    threads:
+        config["threads"]["other"]
+    resources:
+        mem_gb=config["mem_gb"]["other"],
+    shell:
+        """
+        ## don't use bcftools view -H {input}; saves the dependancy of bcftools + python
+        cut -f 4 {input} | python workflow/scripts/array2nsmmmmsd.py --indented >  {output}
         mean=$(grep "mean:" {output} | awk '{{ print $2 }}')
         stdv=$(grep "stdv:" {output} | awk '{{ print $2 }}')
         python workflow/scripts/generate_ppf_table.py norm $mean $stdv --outstyle yaml --round 2 >>  {output}

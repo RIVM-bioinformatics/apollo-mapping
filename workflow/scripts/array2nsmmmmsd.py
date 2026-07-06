@@ -26,18 +26,23 @@ def main() -> None:
 
     # generate stats
     stats = {
+        "model":    "norm",
         "n":        df.shape[0],
         "sum":      summed(df[C].sum()),
         "min":      df[C].min(),
         "max":      df[C].max(),
         "median":   df[C].median(),
         "mean":     round(df[C].mean(),num_decimals),
-        "sd":       round(df[C].std(),num_decimals),
+        "stdv":     round(df[C].std(),num_decimals),
     }
 
+    indentation=""
+    if "--indented" in sys.argv:
+        print("fit:")
+        indentation="  "
     # print stats in yaml format
     for k,v in stats.items():
-        print("%s: %s" % (k,v))
+        print("%s%s: %s" % (indentation,k,v))
     sys.exit(0)
 
 if __name__ == "__main__":

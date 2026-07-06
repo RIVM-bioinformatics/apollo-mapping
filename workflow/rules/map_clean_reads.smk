@@ -196,3 +196,26 @@ use rule index_bam as index_bam_mitochondrial with:
         bam = rules.bam_bifurcate_accessions.output.bam_mitochondrial
     output:
         bai = str(rules.bam_bifurcate_accessions.output.bam_mitochondrial) + ".bai"
+
+
+rule_name = "deeptools_bamcoverage"
+rule deeptools_bamcoverage:
+    input:
+        bam = rules.bam_bifurcate_accessions.output.bam_nuclear
+    output:
+        bigwig= str(rules.bam_bifurcate_accessions.output.bam_nuclear)+".coverage.bw"
+    message:
+        "Generating coverage track for {wildcards.sample} mapped on {wildcards.ref_type} [nuclear]"
+    conda:
+        "../envs/deeptools.yaml"
+    container:
+        "docker://quay.io/biocontainers/deeptools:3.5.6--pyhdfd78af_0"
+    threads: config["threads"]["deeptools"]
+    resources:
+        mem_gb=config["mem_gb"]["deeptools"],
+    log:
+        OUT + "/log/mapped_reads/" + rule_name + "_{sample}_{ref_type}.log",
+    shell:
+        """
+        bamCoverage -b {input.bam} -o {output.bigwig} 2>&1>{log}
+        """
