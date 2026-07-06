@@ -6,6 +6,7 @@ threads:
     kraken2: 8
     bwa: 4
     samtools: 4
+    bam_mito_filtered: 4
     other: 1
     qc_mapped: 1
     samtools_stats: 1
@@ -22,6 +23,7 @@ mem_gb:
     kraken2: 64
     bwa: 32
     samtools: 8
+    bam_mito_filtered: 8
     other: 8
     qc_mapped: 8
     samtools_stats: 8

@@ -141,22 +141,26 @@ rule copy_reference_species_genomes:
     input:
         lambda wildcards: PATH_TO_REFERENCES + "/" + wildcards.reference_species_basename
     output:
-        OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}"
+        fa = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}",
+        yaml = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
     shell:
-        """if [ ! -f {output} ]; then sleep 2; cp {input} {output}; fi"""
+        # realize typically many:1 relationship of sample:reference, so file can exist already
+        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
 
 rule copy_reference_strain_genomes:
     # only copy "unique" reference strain genome
     input:
         lambda wildcards: PATH_TO_REFERENCES + "/" + wildcards.reference_strain_basename
     output:
-        OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}"
+        fa = OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}",
+        yaml = OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
     shell:
-        """if [ ! -f {output} ]; then sleep 2; cp {input} {output}; fi"""
+        # realize typically many:1 relationship of sample:reference, so file can exist already
+        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
 
 
 if MultiReferenceProvider.EXTERIOR_FASTA:
-
+    # explicitly provided EXTERIOR_FASTA species reference
     rule copy_external_species_genome:
         input:
             config["species_reference"]
@@ -167,8 +171,10 @@ if MultiReferenceProvider.EXTERIOR_FASTA:
         shell:
             """cp {input} {output}"""
 
-if MultiReferenceProvider.EXTERIOR_FASTA and config["clade_reference"] != "None":
+    # TODO: generate {output}.accessions.yaml file
 
+if MultiReferenceProvider.EXTERIOR_FASTA and config["clade_reference"] != "None":
+    # explicitly provided EXTERIOR_FASTA (multi)clade reference
     rule copy_external_strain_genome:
         input:
             config["clade_reference"]
@@ -178,3 +184,5 @@ if MultiReferenceProvider.EXTERIOR_FASTA and config["clade_reference"] != "None"
             "copy externally provided multiclade strain genome"
         shell:
             """cp {input} {output}"""
+
+    # TODO: generate {output}.accessions.yaml file

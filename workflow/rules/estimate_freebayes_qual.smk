@@ -298,8 +298,8 @@ rule est_qual_filter_vcf:
 apply_bcftools_rule_defaults(rules.est_qual_filter_vcf)
 
 
-rule_name="est_qual_median_and_stdv"
-rule est_qual_median_and_stdv:
+rule_name="est_qual_distribution_specs"
+rule est_qual_distribution_specs:
     input:
         OUT + "/simulated/data/{sample}_on_{ref_type}_filtered.vcf"
     output:
@@ -309,7 +309,7 @@ rule est_qual_median_and_stdv:
     message:
         "Write median and stdv of VCF quality score to yaml from {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
     conda:
-        "../envs/python_pandas_env.yaml"
+        "../envs/python_datascience_basics_env.yaml"
     threads:
         config["threads"]["other"]
     resources:
@@ -317,5 +317,8 @@ rule est_qual_median_and_stdv:
     shell:
         """
         ## don't use bcftools view -H {input}; saves the dependancy of bcftools + python
-        grep -v "^#" {input}  | cut -f 6 | python workflow/scripts/array2nsmmmmsd.py >  {output}
+        grep -v "^#" {input}  | cut -f 6 | python workflow/scripts/array2nsmmmmsd.py --indented >  {output}
+        mean=$(grep "mean:" {output} | awk '{{ print $2 }}')
+        stdv=$(grep "stdv:" {output} | awk '{{ print $2 }}')
+        python workflow/scripts/generate_ppf_table.py norm $mean $stdv --outstyle yaml --round 2 >>  {output}
         """

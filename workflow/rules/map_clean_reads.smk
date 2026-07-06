@@ -108,13 +108,7 @@ ADD_PG_TAG_TO_READS=false 2>&1>{log}
         """
 
 
-rule index_bam:
-    input:
-        bam=OUT + "/mapped_reads/duprem/{ref_type}/{sample}.bam",
-    output:
-        bai=OUT + "/mapped_reads/duprem/{ref_type}/{sample}.bam.bai",
-    message:
-        "Indexing bam file of {wildcards.sample} (mapped on '{wildcards.ref_type}')"
+rule base_index_bam:
     conda:
         "../envs/bwa_samtools.yaml"
     container:
@@ -123,9 +117,82 @@ rule index_bam:
         config["threads"]["other"]
     resources:
         mem_gb=config["mem_gb"]["other"],
-    log:
-        OUT + "/log/index_bam/{sample}__{ref_type}.log",
     shell:
         """
 samtools index {input.bam} 2>&1>{log}
         """
+
+use rule base_index_bam as index_bam with:
+    log:
+        OUT + "/log/index_bam/{sample}__{ref_type}.log",
+    input:
+        bam=rules.MarkDuplicates.output.bam,
+    output:
+        bai=str(rules.MarkDuplicates.output.bam)+".bai",
+    message:
+        "Indexing bam file of {wildcards.sample} (mapped on '{wildcards.ref_type}')"
+
+
+rule bam_bifurcate_accessions:
+    input:
+        bam=rules.MarkDuplicates.output.bam,
+        # required DAG order trigger
+        _bai = rules.index_bam.output.bai,
+        # Mind the input is actually <fa>".accessions.yaml";
+        # doing MultiReferenceProvider.get_ref_path+".accessions.yaml" gives
+        # TypeError unsupported operand type(s) for +: 'method' and 'str'
+        fa=MultiReferenceProvider.get_ref_path
+    output:
+        bam_nuclear=OUT + "/mapped_reads/final/{ref_type}-{sample}-nuclear.bam",
+        bam_mitochondrial=OUT + "/mapped_reads/final/{ref_type}-{sample}-mitochondrial.bam",
+    message:
+        "Filtering out mitochondrial accessions in BAM of {wildcards.sample} (mapped on '{wildcards.ref_type}')"
+    conda:
+        "../envs/bwa_samtools.yaml"
+    container:
+        "docker://staphb/samtools:1.17"
+    params:
+        yaml = lambda wildcards, input: f"{input.fa}.accessions.yaml"
+    threads:
+        1
+    log:
+        OUT + "/log/bam_mito_filtered/{sample}__{ref_type}.log",
+    shell:
+        """
+accs_nuclear=$(cat {params.yaml}  | yq ".nuclear" | sed 's/^- //' | tr "\n" " " | sed 's/ $//');
+accs_mitochondrial=$(cat {params.yaml}  | yq ".mitochondrial" | sed 's/^- //' | tr "\n" " " | sed 's/ $//');
+# usefull to place in the logs ...
+printf "accs_nuclear      : '$accs_nuclear'\n"
+printf "accs_mitochondrial: '$accs_mitochondrial'\n"
+if [ -f {output.bam_nuclear} ]; then
+    # already copied;
+    ok=1
+elif [ "$accs_mitochondrial" == "" ]; then
+    cp -p {input.bam} {output.bam_nuclear};
+    # empty mitochondrial bam file; read the comment in the else statement
+    samtools view -@ 1 -bH {input.bam} > {output.bam_mitochondrial};
+else
+    # !important! realize "^@<accessions>" are unchanged!
+    # Possibele solution, if desired is to use "samtools reheader <in.header.sam> <in.bam>"
+    # In this/our use-case, removing the reads withou header modification will do.
+    samtools view -@ 1 -bh {input.bam} $accs_nuclear > {output.bam_nuclear};
+    samtools view -@ 1 -bh {input.bam} $accs_mitochondrial > {output.bam_mitochondrial};
+fi
+        """
+
+
+use rule index_bam as index_bam_nuclear with:
+    log:
+        OUT + "/log/index_bam/{sample}__{ref_type}-genomic.log",
+    input:
+        bam = rules.bam_bifurcate_accessions.output.bam_nuclear
+    output:
+        bai = str(rules.bam_bifurcate_accessions.output.bam_nuclear) + ".bai"
+
+use rule index_bam as index_bam_mitochondrial with:
+    log:
+        OUT + "/log/index_bam/{sample}__{ref_type}-mitochondrial.log",
+    input:
+        bam = rules.bam_bifurcate_accessions.output.bam_mitochondrial
+    output:
+        bai = str(rules.bam_bifurcate_accessions.output.bam_mitochondrial) + ".bai"
