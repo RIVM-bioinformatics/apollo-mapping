@@ -68,8 +68,11 @@ rule filter_variants:
         # gather extra header lines
         extra_header_lines = []
 
-        # Always filter indels
-        steps = ["bcftools filter -e 'TYPE=\"indel\"' -s Indel -m+ {input.vcf}"]
+        # Always filter indels and complex.
+        steps = [
+            "bcftools filter -e 'TYPE=\"indel\"' -s Indel -m+ {input.vcf}",
+            "bcftools filter -e 'INFO/TYPE=\"complex\"' -s Complex -m+"
+        ]
 
         # In 'species" mode AND multiclade, filter on the blacklist
         if config["trigger_multiclade_masking_workflow"] == "True" and wildcards.ref_type == "species":

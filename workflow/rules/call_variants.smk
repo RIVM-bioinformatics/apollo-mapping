@@ -41,11 +41,13 @@ freebayes \
 {input.bam} >{output.vcf} 2>{log}
         """
 
+# Discredited bcfools norm. There are other tools that do a better job!
 rule bcftools_norm:
     input:
         vcf=rules.freebayes.output.vcf,
+        ref=MultiReferenceProvider.get_ref_path,
     output:
-        vcf=OUT + "/variants/norm/{ref_type}-{sample}.vcf",
+        vcf=OUT + "/variants/norm/bcftools-norm-{ref_type}-{sample}.vcf",
     message:
         "Normalizing called variants for {wildcards.sample} [mapped on ref_type'{wildcards.ref_type}']",
     conda:
@@ -57,54 +59,32 @@ rule bcftools_norm:
         mem_gb=config["mem_gb"]["other"],
     shell:
         """
-        bcftools norm -a -m -any {input.vcf} -o {output.vcf}
+        bcftools norm -f {input.ref} -a -m -any {input.vcf} -o {output.vcf}
         """
 
-
-
-if False:
-
-    rule model_vcf_filtering_params:
-        input:
-            vcf = rules.bcftools_norm.output.vcf,
-            bigwig = rules.make_coverage_track.output.bigwig,
-            yaml = rules.est_qual_distribution_specs.output,
-        output:
-            yaml = str(rules.freebayes.output.vcf) + ".modeled-fit-thresholds.yaml"
-        message:
-            "Performing curve fitting for {wildcards.sample} [on {wildcards.ref_type}] to determine coverage and QUAL filter values."
-        params:
-            qual_prior_mean = "TODO-OBTAIN-FROM-{input.yaml}",
-            qual_prior_stdv = "TODO-OBTAIN-FROM-{input.yaml}"
-        shell:
-            """python workflow/scripts/curve_fitting.py -b {input.bigwig} -v {input.vcf} -o {output.yaml} 2>&1>{log} """
-
-    rule filter_variants_species:
-        wildcard_constraints:
-            ref_type="species"
-        input:
-            vcf = rules.freebayes.output.vcf,
-            yaml = rules.model_vcf_filtering_params.output.yaml,
-            fa=MultiReferenceProvider.get_ref_path
-        output:
-            vcf=OUT + "/variants/filtered/{ref_type}/{sample}.vcf",
-        params:
-            bed = "{input.fa}.variantcalling-blacklist.bed",
-        shell:
-            """
-            custom_script_to_filter_variants.py {input.vcf} --settings {input.yaml} --blacklist {params.bed}
-            """
-
-    rule filter_variants_strain:
-        wildcard_constraints:
-            ref_type="strain"
-        input:
-            vcf=rules.freebayes.output.vcf,
-            yaml=rules.model_vcf_filtering_params.output.yaml,
-        output:
-            vcf=OUT + "/variants/filtered/{ref_type}/{sample}.vcf",
-        shell:
-            """
-            custom_script_to_filter_variants.py {input.vcf} --settings {input.yaml}
-            """
-
+# Now "normalize" variation landscape.
+# This is an example of variant types AFTER vcfbreakmulti from raw freebayes results:
+# Especially the "mnp" category we want to get rid of, which vcflib does excellently!
+#  22034 TYPE=complex
+#   3455 TYPE=del
+#   3333 TYPE=ins
+#   1878 TYPE=mnp
+# 131590 TYPE=snp
+rule vcflib_breakmulti_allelicprimitives:
+    input:
+        vcf=rules.freebayes.output.vcf,
+    output:
+        vcf=OUT + "/variants/norm/{ref_type}-{sample}.vcf",
+    message:
+        "Normalizing called variants for {wildcards.sample} [mapped on ref_type'{wildcards.ref_type}']",
+    conda:
+        "../envs/vcflib.yaml"
+    log:
+        OUT + "/log/vcflib_breakmulti_allelicprimitives/{ref_type}-{sample}.log",
+    threads: config["threads"]["other"]
+    resources:
+        mem_gb=config["mem_gb"]["other"],
+    shell:
+        """
+        vcfbreakmulti {input.vcf} | vcfallelicprimitives -k -g > {output.vcf} 2>{log}
+        """

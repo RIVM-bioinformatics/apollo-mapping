@@ -1,0 +1,6 @@
+name: vcflib
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - vcflib==1.0.15
