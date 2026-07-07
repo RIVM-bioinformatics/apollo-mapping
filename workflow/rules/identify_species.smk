@@ -145,7 +145,7 @@ rule copy_reference_species_genomes:
         yaml = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
     shell:
         # realize typically many:1 relationship of sample:reference, so file can exist already
-        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
+        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; chmod u+w {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
 
 rule copy_reference_strain_genomes:
     # only copy "unique" reference strain genome
@@ -156,7 +156,7 @@ rule copy_reference_strain_genomes:
         yaml = OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
     shell:
         # realize typically many:1 relationship of sample:reference, so file can exist already
-        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
+        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; chmod u+w {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
 
 
 if MultiReferenceProvider.EXTERIOR_FASTA:
