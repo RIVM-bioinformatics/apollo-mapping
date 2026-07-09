@@ -45,7 +45,7 @@ def get_filter_thresholds(wildcards, input) -> dict:
 
 rule filter_variants:
     input:
-        vcf=rules.bcftools_norm.output.vcf,
+        vcf=rules.vcflib_breakmulti_wave.output.vcf,
         # TODO: need to pitch in the real fitted data
         ##yaml_cov_fitted=rules.curvefitting_on_coverage.output.yaml,
         ##yaml_qual_fitted=rules.curvefitting_on_quality_score.output.yaml,

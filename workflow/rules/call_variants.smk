@@ -70,7 +70,7 @@ rule bcftools_norm:
 #   3333 TYPE=ins
 #   1878 TYPE=mnp
 # 131590 TYPE=snp
-rule vcflib_breakmulti_allelicprimitives:
+rule vcflib_breakmulti_wave:
     input:
         vcf=rules.freebayes.output.vcf,
     output:
@@ -85,6 +85,10 @@ rule vcflib_breakmulti_allelicprimitives:
     resources:
         mem_gb=config["mem_gb"]["other"],
     shell:
-        """
-        vcfbreakmulti {input.vcf} | vcfallelicprimitives -k -g > {output.vcf} 2>{log}
+        ## DEPRECATED! vcfwave handles fixing types natively
+        # vcfbreakmulti {input.vcf} | vcfallelicprimitives -k -g | workflow/scripts/fix_types.sh > {output.vcf} 2> {log}
+        r"""
+        vcfbreakmulti {input.vcf} | vcfwave | vcfallelicprimitives \
+            | awk '{{gsub(/TYPE=snp,snp/, "TYPE=snp"); gsub(/TYPE=ins,ins/, "TYPE=ins"); gsub(/TYPE=del,del/, "TYPE=del"); print}}' \
+            > {output.vcf} 2> {log}
         """

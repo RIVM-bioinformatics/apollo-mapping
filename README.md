@@ -43,6 +43,11 @@ hatch shell
 
 
 ## Installation (the conda way)
+
+Conda installation - vanilla for most RIVM snakemake repo's - is **not** the preferred installation way anymore for apollo-mapping.
+It's possible that below installation will work, but due to increased usage inter-repo dependencies it might be obsolute or even broken.
+So, unless you really can't follow to hatch install, please don't follow below conda install guidelines.
+
 1. Clone the repository.
 ```
 git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
@@ -166,6 +171,14 @@ python3 apollo_mapping.py -i $input -o $output \
     --trigger-multiclade-masking-workflow \
     --species candida_auris \
     --snakemake-args "cores=1" "nodes=1" --dryrun
+    
+# after the workflow did finish, various /softclipped-species/{sampleId}.species.softclipped.bw need
+# to get merged ino a final blacklist-softclipped.bed file
+for bw in `find $output/softclipped-species -name "*.species.access-softclipped.bw"`
+do
+    echo $bw 1>&2
+    ~/software/ucsc/bigWigToBedGraph $bw stdout
+done | bedtools sort | bedtools merge > /tmp/softclipped-I-II-IV-V-VI.bed
 
 
 
