@@ -1,30 +1,29 @@
-
+# Imports
 import yaml as YAML
-
-# TODO: realize identical code exists in estimate_freebayes_qual.smk
-#       Refactor into generic "workflow/helpers.py"
+from typing import Dict
 
 from snakemake.rules import Rule
 
 def apply_bcftools_rule_defaults(rule_obj:Rule) -> None:
     """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
+    # TODO: realize identical code exists in estimate_freebayes_qual.smk
+    #       Refactor into generic "workflow/helpers.py"
     rule_obj.threads = config["threads"]["other"]
     rule_obj.resources = {"mem_gb": config["mem_gb"]["other"]}
     rule_obj.conda = "../envs/bcftools.yaml"
     rule_obj.container = "" #"docker://PATH/TO/MASON/CONTAINER:<PINNEDVERSION>"
 
-def get_filter_thresholds(wildcards, input) -> dict:
-    """ """
+def get_filter_thresholds(wildcards, input:list) -> Dict[str,float]:
+    """ Read """
     # sadly "input" is a list, so we need to explicitly rely on the order
     # TODO: pitch in the "read" fitted data yamls,
     #       and check if data was fitted succesfully or not.
     #       If not, fallback to priors
     vcf, fname_yaml_cov, fname_yaml_qual = input[0:3]
 
-    # TODO: refactor / move elsewhere!
     class AttrDict(dict):
         """ mixin between dictionary and object, with both options for key lookup """
-
+        # TODO: refactor / move elsewhere!
         # https://stackoverflow.com/questions/4984647/accessing-dict-keys-like-an-attribute
         def __init__(self, *args, **kwargs):
             super(AttrDict,self).__init__(*args,**kwargs)
@@ -132,7 +131,7 @@ rule bcftools_only_pass:
     input:
         vcf = OUT + "/variants/filtered/{sample}_on_{ref_type}-simplified.vcf",
     output:
-        vcf = OUT + "/variants/filtered/{sample}_on_{ref_type}-filtered.vcf",
+        vcf = OUT + "/variants/filtered/{sample}_on_{ref_type}-passed.vcf",
     log:
         OUT + "/log/filter_variants/" + rule_name + "{sample}-on-{ref_type}.log",
     shell:

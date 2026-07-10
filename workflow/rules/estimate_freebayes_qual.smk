@@ -323,10 +323,12 @@ rule est_qual_distribution_specs:
         mem_gb=config["mem_gb"]["other"],
     shell:
         """
-        ## don't use bcftools view -H {input}; saves the dependancy of bcftools + python
+        # don't use bcftools view -H {input}; saves the dependancy of bcftools + python
         grep -v "^#" {input}  | cut -f 6 | python workflow/scripts/array2nsmmmmsd.py --indented >  {output}
         mean=$(grep "mean:" {output} | awk '{{ print $2 }}')
         stdv=$(grep "stdv:" {output} | awk '{{ print $2 }}')
+        # realize --p-values "0.0005,0.001,..." can be provided explicitly when needed;
+        # currently implemented default values are the (copied) ones stated in apollo_mapping.py 
         python workflow/scripts/generate_ppf_table.py norm $mean $stdv --outstyle yaml --round 2 >>  {output}
         """
 

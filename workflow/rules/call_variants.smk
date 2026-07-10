@@ -85,8 +85,10 @@ rule vcflib_breakmulti_wave:
     resources:
         mem_gb=config["mem_gb"]["other"],
     shell:
-        ## DEPRECATED! vcfwave handles fixing types natively
-        # vcfbreakmulti {input.vcf} | vcfallelicprimitives -k -g | workflow/scripts/fix_types.sh > {output.vcf} 2> {log}
+        ## !important! workflow/scripts/fix_types.sh not needed since vcfwave handles fixing types natively
+        ## vcfbreakmulti {input.vcf} | vcfallelicprimitives -k -g | workflow/scripts/fix_types.sh > {output.vcf} 2> {log}
+        ## However, mnp-variants are still unsplitted at that point, which vcfallelicprimitives does solve.
+        ## But, it introduces "TYPE=snp,snp" syntax which is fixed by the awk statement
         r"""
         vcfbreakmulti {input.vcf} | vcfwave | vcfallelicprimitives \
             | awk '{{gsub(/TYPE=snp,snp/, "TYPE=snp"); gsub(/TYPE=ins,ins/, "TYPE=ins"); gsub(/TYPE=del,del/, "TYPE=del"); print}}' \

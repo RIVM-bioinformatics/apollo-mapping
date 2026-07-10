@@ -7,11 +7,12 @@
 </div>
 
 ## Pipeline information
-* **Author(s):**            Boas van der Putten, Roxanne Wolthuis
+* **Author(s):**            Boas van der Putten, Roxanne Wolthuis, Sofie Hofman, Ate van der Burgt
 * **Organization:**         Rijksinstituut voor Volksgezondheid en Milieu (RIVM)
 * **Department:**           Infektieziekteonderzoek, Diagnostiek en Laboratorium Surveillance (IDS), Bacteriologie (BPD)
 * **Start date:**           07 - 04 - 2023
-* **Commissioned by:**      Thijs Bosch
+* **Refactoring episode:**  2026/Q2
+* **Commissioned by:**      Thijs Bosch and Auke de Jong
 
 ## About this project
 Apollo-mapping is the first pipeline created in the Apollo pipeline series. The Goal of these pipelines is to set up a routine surveillance for fungi (A.fumigatus, Candida). The apollo-mapping pipeline is created with the juno-template and juno-library.
@@ -27,11 +28,12 @@ The pipeline uses the following tools(NOT COMPLETE):
 
 ## Prerequisities
 * Linux environment
-* (mini)conda
+* hatch
 * Python 3.11
 
+## Installation
 
-## Installation (using hatch)
+### using hatch
 ```bash
 git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
 cd apollo-mapping
@@ -41,89 +43,19 @@ hatch env create
 hatch shell
 ```
 
-
-## Installation (the conda way)
+### using conda
 
 Conda installation - vanilla for most RIVM snakemake repo's - is **not** the preferred installation way anymore for apollo-mapping.
-It's possible that below installation will work, but due to increased usage inter-repo dependencies it might be obsolute or even broken.
-So, unless you really can't follow to hatch install, please don't follow below conda install guidelines.
-
-1. Clone the repository.
-```
-git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
-```
-
-2. Go to the pipeline directory.
-```
-cd apollo-mapping
-```
-
-3. Create & activate mamba environment.
-```
-conda env update -f envs/mamba.yaml
-```
-```
-conda activate mamba
-```
-
-4. Create & activate apollo environment.
-```
-mamba env update -f envs/apollo_mapping.yaml
-```
-```
-conda activate apollo_mapping
-```
-
-5. Example of run:
-```
-python3 apollo_mapping.py -i [input] -o [output] -s [species]
-```
-
-6. Alternative install (using micromamba)
-```
-## install micromamba if not installed yet
-curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | sudo tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
-
-## connect micromamba to current bash shell
-eval "$(micromamba shell hook --shell bash)"
-
-# or, permanently connect micromamba to bash shell
-## micromamba shell init --shell bash --root-prefix=~/.local/share/mamba
-
-git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
-cd apollo-mapping
-micromamba create -n apollo-mapping -f envs/apollo_mapping.yaml
-micromamba activate apollo-mapping
-
-```
-
+It's possible that conda installation will work, but due to increased usage inter-repo dependencies it might be obsolute or even broken.
 
 ## Parameters & Usage
 
 ### Command for help
-* ```-h, --help``` Shows the help of the pipeline
-
-### Required parameters
+* 
+* ``` apollo-mapping.py -h, --help``` Shows the help of the pipeline; checkout the various --help-*** submenu's
 * ```-i, --input``` Relative or absolute path to the input directory. It must contain all the raw reads (fastq) files for all samples to be processed (not in subfolders)
-* ```-s, --species``` Species to use, choose from: ['candida_auris', 'aspergillus_fumigatus']
-
-### Optional parameters
 * ```-o --output``` Relative or absolute path to the output directory. If none is given, an 'output' directory will be created in the current directory
-* ```-w, --workdir``` Relative or absolute path to the working directory. If none is given, the current directory is used.
-* ```-ex, --exclusionfile``` Path to the file that contains samplenames to be excluded.
-* ```-p, --prefix``` Conda or singularity prefix. Basically a path to the place where you want to store the conda environments or the singularity images.
-* ```-l, --local``` If this flag is present, the pipeline will be run locally (not attempting to send the jobs to an HPC cluster**). The default is to assume that you are working on a cluster. **Note that currently only LSF clusters are supported.
-* ```-tl, --time-limit``` Time limit per job in minutes (passed as -W argument to bsub). Jobs will be killed if not finished in this time.
-* ```-u, --unlock``` Unlock output directory (passed to snakemake).
-* ```-n, --dryrun``` Dry run printing steps to be taken in the pipeline without actually running it (passed to snakemake).
-* ```-q, --queue``` Name of the queue that the job will be submitted to if working on a cluster.
-* ```-mpt, --mean-quality-treshold``` Phred score to be used as threshold for cleaning (filtering) fastq files.
-* ```-ws, --window-size``` Window size to use for cleaning (filtering) fastq files.
-* ```-ml, --minimum-lenth``` Minimum length for fastq reads to be kept after trimming.
-* ```--no-containers``` Use conda environments instead of containers.
-* ```--snakemake-args``` Extra arguments to be passed to snakemake API (https://snakemake.readthedocs.io/en/stable/api_reference/snakemake.html).
-* ```--reference``` Reference genome to use default is chosen based on species argument, defaults per species can be found in: /mnt/db/apollo/mapping/[species]
-* ```--db-dir``` Kraken2 database directory (should include fungi!)                 
+          
 
 ### The base command(s) to run this program. 
 ```
@@ -164,8 +96,9 @@ python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/locatio
 
 # Example for multiclade masking (sub)worflow
 
-input=/home/avdb/RIVM/data-apollo-reference/test-fastq-input-cauris-clades
-output=/home/avdb/RIVM/output-cauris-clades
+rootdatadir=$HOME/RIVM
+input=$rootdatadir/data-apollo-reference/test-fastq-input-cauris-clades
+output=$rootdatadir/output-cauris-clades
 python3 apollo_mapping.py -i $input -o $output \
     --local --no-containers \
     --trigger-multiclade-masking-workflow \
@@ -184,7 +117,7 @@ done | bedtools sort | bedtools merge > /tmp/softclipped-I-II-IV-V-VI.bed
 
 ```
 
-Detailed information about the pipeline can be found in the [documentation](link to other docs). This documentation is only suitable for users that have access to the RIVM Linux environment.
+In the (near) future, detailed information about the pipeline can be found in the [documentation](link to other docs). This documentation is mostly suitable for users that have access to the RIVM Linux environment.
 
 ## Explanation of the output
 * **audit_trail:** Logs of conda, git and the pipeline, a sample sheet, the used parameters and a snakemake report.
@@ -197,12 +130,6 @@ Detailed information about the pipeline can be found in the [documentation](link
 * **qc_mapping:** Quality control of mapping.
 * **reference:** Reference genome used.
 * **variant:** Variant calling results.
-
-## Issues
-* This pipeline only works on the RIVM cluster.
-
-## Future ideas for this pipeline
-* Make this pipeline available and user friendly for users outside RIVM.
 
 ## License
 This pipeline is licensed with a AGPL3 license. Detailed information can be found inside the 'LICENSE' file in this repository.

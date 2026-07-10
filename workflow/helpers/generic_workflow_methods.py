@@ -1,3 +1,10 @@
+""" Placeholder module for generic workflow methods (see rivm-ids-swc-snakeutils).
+
+For now, this code is kept here as pseudocode. It's currently not being used in apollo-mapping.
+
+"""
+
+# Imports
 import inspect
 import re
 

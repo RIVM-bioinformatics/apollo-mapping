@@ -161,7 +161,7 @@ class MultiReferenceProvider:
                 #f"{OUT}/variants/raw/{ref_type}-{sample}.vcf",
                 #f"{OUT}/variants/norm/{ref_type}-{sample}.vcf",
                 #f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.coverage.bw",
-                f"{OUT}/variants/filtered/{sample}_on_{ref_type}-filtered.vcf",
+                f"{OUT}/variants/filtered/{sample}_on_{ref_type}-passed.vcf",
             ]
             return outfile_templates
 
