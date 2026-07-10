@@ -28,6 +28,7 @@ import apollo_reference
 from apollo_reference.referencedata import (
     ProvidedSchema,
     validate_reference_dataset,
+    validate_reference_dataset_multiclade_requirements,
     get_identify_species_mmidx_relpath,
 )
 from apollo_reference.dataframes import (
@@ -610,6 +611,14 @@ class ApolloMapping(Pipeline):
         SUPPORTED_PPF_TABLE_TH_MIN = tuple(SUPPORTED_PPF_TABLE_TH_MIN + [None])
         SUPPORTED_PPF_TABLE_TH_MAX = tuple(SUPPORTED_PPF_TABLE_TH_MAX + [None])
 
+        # TODO: add --omit-filter-QUAL-strain
+        # TODO: add --omit-filter-DP-strain
+        # TODO: add --omit-filter-QUAL-species
+        # TODO: add --omit-filter-DP-species
+        # TODO: add --omit-filter-Blacklist-species
+        # TODO: include mutually exclusive argument validation
+        # TODO: implement the use of these params in filter_variants.smk / rule filter_variants
+
         # PPF
         for rule_name in ("filter_variants_species","filter_variants_strain"):
             with self.smkp.tool_context("filter_variants", rule_name):
@@ -982,10 +991,15 @@ class ApolloMapping(Pipeline):
                 self.forced_species = args.forced_species
                 return True
             elif (args.forced_accession or args.forced_clade or args.forced_cladegroup):
+                # get _selected variable from which next(first row) will hold the concerning dataframe row
                 if args.forced_accession:
                     _selected = df[df.reference==args.forced_accession]
                 elif args.forced_cladegroup:
                     _selected = df[ ( (df.cladegroup==args.forced_cladegroup) & (df.is_primary == True) ) ]
+                    # !important! we still need to validate that all data for multistrain-cladegroups is present
+                    dbpath = CONFIG["apollo_reference_db_dir"]
+                    validate_reference_dataset_multiclade_requirements(dbpath)
+
                 elif args.forced_clade:
                     # forced_clade sets a forced clade_reference AND its corresponding species_reference
                     _selected = df[df.clade==args.forced_clade.replace("_"," ")]
@@ -1118,6 +1132,7 @@ class ApolloMapping(Pipeline):
         self.user_parameters.update({
             # multireference database path
             "reference_genomes_dir": str(os.path.join(CONFIG['apollo_reference_db_dir'], "refs")),
+            "apollo_reference_dir": str(CONFIG['apollo_reference_db_dir']),
         })
 
         # overtake those listed in self._ADDED_ATTRIBUTES

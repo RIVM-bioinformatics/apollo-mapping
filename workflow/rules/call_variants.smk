@@ -21,6 +21,11 @@ rule freebayes:
         haplotype_length=config["freebayes"]["haplotype_length"],
         min_repeat_size=config["freebayes"]["min_repeat_size"],
         min_repeat_entropy=config["freebayes"]["min_repeat_entropy"],
+        # TODO: seriously consider to investigate the use of parameter -F in future effort for diploid SNP calling:
+        #    -F --min-alternate-fraction N
+        #               Require at least this fraction of observations supporting
+        #               an alternate allele within a single individual in the
+        #               in order to evaluate the position.  default: 0.05
     conda:
         "../envs/freebayes.yaml"
     container:

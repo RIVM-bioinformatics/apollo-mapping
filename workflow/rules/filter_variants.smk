@@ -50,8 +50,13 @@ rule filter_variants:
         ##yaml_qual_fitted=rules.curvefitting_on_quality_score.output.yaml,
         yaml_cov_prior=rules.est_cov_distribution_specs.output,
         yaml_qual_prior=rules.est_qual_distribution_specs.output,
-        # TODO: get real file (which still needs to get copied along in the pipeline)
-        bed = "/tmp/softclipped-I-II-IV-V-VI.bed",
+        # TODO: make sure blacklist filename is DYNAMICALLY obtained
+        #       at this moment there is only a single multispecies, so this will work just fine
+        #       but of course this is extremely fragile.
+        #       Due to limited time, it was decided NOT to completely automate the multi-clade concept.
+        #       And this is a (very) sad example of it.
+        #       bed = "/tmp/softclipped-I-II-IV-V-VI.bed"
+        bed = OUT + "/reference/species/cauris-GCA_002759435.3-blacklist.bed",
     output:
         vcf=OUT + "/variants/filtered/{sample}_on_{ref_type}-labeled.vcf",
     message:
@@ -74,6 +79,11 @@ rule filter_variants:
         ]
 
         # In 'species" mode AND multiclade, filter on the blacklist
+        # TODO: !!important!! at this point the pipeline will crash in some conditions
+        #       e.g. non C.auris ;-) e.g. not-multiclade.
+        #       Need to get fixed ASAP ... but can't be done without extra input
+        #       Probably it's needed to add to input: ref=MultiReferenceProvider.get_ref_path
+        #       Based on this, we can check if it's linked to a blacklist
         if config["trigger_multiclade_masking_workflow"] == "True" and wildcards.ref_type == "species":
             header_line = '##FILTER=<ID=Blacklisted,Description="Variant overlaps with softclipped and/or segmental variable regions">'
             steps.append(

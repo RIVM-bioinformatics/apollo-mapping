@@ -143,9 +143,21 @@ rule copy_reference_species_genomes:
     output:
         fa = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}",
         yaml = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
+    params:
+        blackistdir = config["apollo_reference_dir"] + "/multiclade",
+        refoutdir = OUT + "/reference/species",
     shell:
         # realize typically many:1 relationship of sample:reference, so file can exist already
-        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; chmod u+w {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
+        """
+        if [ ! -f {output.fa} ]; then
+            sleep 2;
+            cp {input} {output.fa};
+            chmod u+w {output.fa};
+            cp {input}.accessions.yaml {output.yaml};
+            # TODO: refactor to not copying ALL blacklist files in the future
+            cp {params.blackistdir}/*.bed {params.refoutdir};
+        fi
+        """
 
 rule copy_reference_strain_genomes:
     # only copy "unique" reference strain genome
@@ -156,7 +168,14 @@ rule copy_reference_strain_genomes:
         yaml = OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
     shell:
         # realize typically many:1 relationship of sample:reference, so file can exist already
-        """if [ ! -f {output.fa} ]; then sleep 2; cp {input} {output.fa}; chmod u+w {output.fa}; cp {input}.accessions.yaml {output.yaml}; fi"""
+        """
+        if [ ! -f {output.fa} ]; then
+            sleep 2;
+            cp {input} {output.fa};
+            chmod u+w {output.fa};
+            cp {input}.accessions.yaml {output.yaml};
+        fi
+        """
 
 
 if MultiReferenceProvider.EXTERIOR_FASTA:

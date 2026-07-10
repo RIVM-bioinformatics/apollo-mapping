@@ -114,6 +114,17 @@ do
 done | bedtools sort | bedtools merge > /tmp/softclipped-I-II-IV-V-VI.bed
 
 
+# Example for multiclade analyses worflow
+
+rootdatadir=$HOME/RIVM
+input=$rootdatadir/data-apollo-reference/test-fastq-input-cauris-clades
+output=$rootdatadir/output-cauris-clades-vanilla
+python3 apollo_mapping.py -i $input -o $output \
+    --local --no-containers \
+    --clg cauris --skip-kraken \
+    --snakemake-args "cores=1" "nodes=1" --dryrun
+
+
 
 ```
 
