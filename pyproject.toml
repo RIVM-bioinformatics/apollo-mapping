@@ -28,9 +28,9 @@ dependencies = [
     # TODO: need to pin version, but currently main is only branch which includes co-packaged config/referencedata.yaml
     #"apollo-reference @ git+https://github.com/RIVM-bioinformatics/apollo-reference.git@v0.1.1",
     "apollo-reference @ git+https://github.com/RIVM-bioinformatics/apollo-reference.git",
+    # TODO: need to pin version @v0.1.0
+    "rivm-ids-swc-argparseutils @ git+https://github.com/RIVM-bioinformatics/rivm-ids-swc-argparseutils.git",
 
-    # TODO: refactor: rivm-idsbioinfo-argparse-utils into a stand-alone repo
-    #"rivm-idsbioinfo-argparse-utils @ git+https://github.com/RIVM-bioinformatics/rivm-idsbioinfo-argparse-utils.git@v0.1.1",
     #"biovalid @ git+https://github.com/RIVM-bioinformatics/biovalid.git@biovalid-v0.5.0"
 ]
 
@@ -68,8 +68,13 @@ pre-install-commands = [
     "git clone --depth 1 --branch v0.4.7 https://github.com/RIVM-bioinformatics/juno-mapping.git {root}/juno_mapping",
     # optionally, install "generic" pythonic requirements from {root}/juno_mapping/requirements.txt"
 
-    # TODO: refactor: rivm-idsbioinfo-argparse-utils into a stand-alone repo
-    "python -m pip install -r {root}/rivm_idsbioinfo_argparse_utils/requirements.txt",
+    ## TODO: refactor: rivm-idsbioinfo-argparse-utils into a stand-alone repo
+    #"python -m pip install -r {root}/rivm_idsbioinfo_argparse_utils/requirements.txt",
+
+    #"rm -rf {root}/rivm-ids-swc-argparseutils",
+    #"cp -r  {env:HOME}/gitrepos/rivm-ids-swc-argparseutils {root}/rivm-ids-swc-argparseutils",
+    #"python -m pip install -e {root}/rivm-ids-swc-argparseutils",
+
 ]
 
 [tool.hatch.envs.test]
@@ -83,10 +88,29 @@ dependency-groups = ["test"]
 dependency-groups = ["dev"]
 pre-install-commands = [
     "echo 'initializing pre-install-commands [dev]...'",
+    # TODO: harmonisation / enforcement repository needed to exist locally!
+    "echo 'WARNING: not functional since it requires local harmonisation repository",
     # SCENARIO 0: Test a local repo or branch prior to commit.
     "rm -rf {root}/ci-tools",
-    "cp -r /home/avdb/gitrepos/bicbio-ci-templates {root}/ci-tools",
+    "cp -r  {env:HOME}/gitrepos/bicbio-ci-templates {root}/ci-tools",
     # use "python -m pip" to guarantee environment's python & pip is used
     "python -m pip install -r {root}/ci-tools/requirements.txt",
     ###"python -m pip install -e {root}/ci-tools",
+
+    ## harmonization; SCENARIO X1 - local python repo, without pyproject.toml but with requirements
+    ## This repo's exact folder should (temporarily!!) really exist in your own repo.
+    ## This code pattern allows you to start compartimentalizing code, test it locally,
+    ## and only rebuild the "isolated" code into a repo on its own once all code is finished
+    #"python -m pip install -r {root}/rivm-ids-swc-argparseutils/requirements.txt",
+    #
+    ## harmonization; SCENARIO X2 - local python repo with its own pyproject.toml
+    ## See the stamenent above; once the "isolated" code has its own (exterior) folder
+    ## and its own pyproject.toml, it can be included like this.
+    ## This stage represents the final stage before truely initializing it as a stand-along repo.
+    ## Once this all works, it's safe to publish it as a git repo and include it as a dependency.
+    #"rm -rf {root}/rivm-ids-swc-argparseutils",
+    #"cp -r  {env:HOME}/gitrepos/rivm-ids-swc-argparseutils {root}/rivm-ids-swc-argparseutils",
+    #"python -m pip install -e {root}/rivm-ids-swc-argparseutils",
+    #
+
 ]

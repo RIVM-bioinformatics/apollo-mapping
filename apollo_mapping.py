@@ -23,7 +23,7 @@ from typing import Union, Optional, List, Literal, TYPE_CHECKING
 # TODO chore: deprecate version.py file ?
 from version import __package_name__, __version__
 
-# Python Imports (RIVM packages)
+# Python Imports (dependant RIVM packages)
 import apollo_reference
 from apollo_reference.referencedata import (
     ProvidedSchema,
@@ -37,16 +37,16 @@ from apollo_reference.dataframes import (
     FASTQ_REFERENCE_TSV
 )
 from juno_library import Pipeline
-from rivm_idsbioinfo_argparse_utils.actions import DynamicHelpTopicAction, DynamicHelpTopicShowMarkDownAction
-from rivm_idsbioinfo_argparse_utils.parsers.hierarchicalconfigparser import SnakemakeParser
-from rivm_idsbioinfo_argparse_utils.shortcuts import ArgumentContainer, get_flags_from_dest
-from rivm_idsbioinfo_argparse_utils.argumentlabels import label_expert_arg, label_notimplemented_arg, label_deprecated_arg
-from rivm_idsbioinfo_argparse_utils.formats.fasta import (
+from rivm_ids_swc_argparseutils.actions import DynamicHelpTopicAction, DynamicHelpTopicShowMarkDownAction
+from rivm_ids_swc_argparseutils.parsers.hierarchicalconfigparser import SnakemakeParser
+from rivm_ids_swc_argparseutils.shortcuts import ArgumentContainer, get_flags_from_dest
+from rivm_ids_swc_argparseutils.argumentlabels import label_expert_arg, label_notimplemented_arg, label_deprecated_arg
+from rivm_ids_swc_argparseutils.custom_types import float_or_na
+from rivm_ids_swc_argparseutils.formats.fasta import (
     validate_fasta_file,
     are_no_accession_overlap_in_fasta,
     are_accessions_present_in_fasta,
 )
-
 # configuration. read from various files from apollo-reference and apollo-mapping tool_parameters.yaml
 APOLLO_REFERENCE_CONFIG_YAML = os.path.join(apollo_reference.__path__[0],"config","referencedata.yaml")
 TOOL_PARAMS_YAML = yaml.safe_load(open(Path(__file__).parent.joinpath("config/tool_parameters.yaml")))
@@ -225,11 +225,11 @@ class DynamicHelpAvailableFastqAction(DynamicHelpTopicAction):
         return tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
 
 class DynamicHelpCustomrefsAction(DynamicHelpTopicShowMarkDownAction):
-    MARKDOWN_FILE = "CHANGELOG.md"
-    #def generate_content(self) -> str:
-    #    """ show textual examples of how to apply custom reference data as input upon --help-customrefs """
-    #    #text = read_markdown_file(path_to_xxxx)
-    #    raise NotImplementedError("explanation to be developed")
+    #MARKDOWN_FILE = "CHANGELOG.md"
+    MARKDOWN_FILE = "docs/custom_reference.md"
+
+class DynamicHelpPpfTableAction(DynamicHelpTopicShowMarkDownAction):
+    MARKDOWN_FILE = "docs/ppf_table_variant_filtering.md"
 
 
 
@@ -594,10 +594,13 @@ class ApolloMapping(Pipeline):
         #  - workflow/scripts/generate_ppf_table.py (estimate_freebayes_qual.est_qual_distribution_specs)
         #  - workflow/scripts/generate_ppf_table.py (estimate_freebayes_qual.est_cov_distribution_specs)
         #  - workflow/scripts/curve_fitting.py
-        SUPPORTED_PPF_TABLE_TH_MIN = (0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05)
-        SUPPORTED_PPF_TABLE_TH_MAX = tuple([1.0 - th for th in reversed(SUPPORTED_PPF_TABLE_TH_MIN)])
-        #SUPPORTED_PPF_TABLE_TH_MAX.append(None)
+        SUPPORTED_PPF_TABLE_TH_MIN = [0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05]
+        SUPPORTED_PPF_TABLE_TH_MAX = [1.0 - th for th in reversed(SUPPORTED_PPF_TABLE_TH_MIN)]
+        # !important! NA == None is supported value too
+        SUPPORTED_PPF_TABLE_TH_MIN = tuple(SUPPORTED_PPF_TABLE_TH_MIN + [None])
+        SUPPORTED_PPF_TABLE_TH_MAX = tuple(SUPPORTED_PPF_TABLE_TH_MAX + [None])
 
+        # PPF
         for rule_name in ("filter_variants_species","filter_variants_strain"):
             with self.smkp.tool_context("filter_variants", rule_name):
                 DEFAULTS = TOOL_PARAMS_YAML[rule_name]
@@ -607,16 +610,16 @@ class ApolloMapping(Pipeline):
 
                 self.smkp.add_param(
                     "--min-ppf-QUAL-%s" % mappedon,
-                    type=float,
-                    metavar="0.0-1.0",
+                    type=float_or_na,
+                    metavar="0.0-1.0|NA",
                     default=DEFAULTS['min-ppf-QUAL'],
                     choices=SUPPORTED_PPF_TABLE_TH_MIN,
                     help="Minimum "+_snippet_ppf+" QUAL score fit " + _snippet_info % DEFAULTS['min-ppf-QUAL'],
                 )
                 self.smkp.add_param(
                     "--max-ppf-QUAL-%s" % mappedon,
-                    type=float,
-                    metavar="0.0-1.0",
+                    type=float_or_na,
+                    metavar="0.0-1.0|NA",
                     default=DEFAULTS['max-ppf-QUAL'],
                     choices=SUPPORTED_PPF_TABLE_TH_MAX,
                     help="Maximum "+_snippet_ppf+" QUAL score fit " + _snippet_info % DEFAULTS['max-ppf-QUAL'],
@@ -624,16 +627,16 @@ class ApolloMapping(Pipeline):
 
                 self.smkp.add_param(
                     "--min-ppf-DP-%s" % mappedon,
-                    type=float,
-                    metavar="0.0-1.0",
+                    type=float_or_na,
+                    metavar="0.0-1.0|NA",
                     default=DEFAULTS['min-ppf-DP'],
                     choices=SUPPORTED_PPF_TABLE_TH_MIN,
                     help="Minimum "+_snippet_ppf+" Coverage (DP) score fit " + _snippet_info % DEFAULTS['min-ppf-DP'],
                 )
                 self.smkp.add_param(
                     "--max-ppf-DP-%s" % mappedon,
-                    type=float,
-                    metavar="0.0-1.0",
+                    type=float_or_na,
+                    metavar="0.0-1.0|NA",
                     default=DEFAULTS['max-ppf-DP'],
                     choices=SUPPORTED_PPF_TABLE_TH_MAX,
                     help="Maximum "+_snippet_ppf+" Coverage (DP) score fit " + _snippet_info % DEFAULTS['max-ppf-DP'],
@@ -722,9 +725,16 @@ class ApolloMapping(Pipeline):
         misc_help_group.add_argument(
             "--help-customrefs",
             action=DynamicHelpCustomrefsAction,
-            dest="help_customrefs",
             help="show some brief examples on how to parameterize input for custom reference data",
         )
+
+        misc_help_group.add_argument(
+            "--help-ppftable",
+            action=DynamicHelpPpfTableAction,
+            help="explains the PPF thresholding of called variants and how to adjust this using CLI flags",
+        )
+
+
         # realize (e.g.) --help-species and --species-help exist
         _add_argument_help_species(misc_help_group,["--help-species"])
         _add_argument_help_assemblies(misc_help_group,["--help-assemblies"])
