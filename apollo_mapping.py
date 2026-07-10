@@ -126,7 +126,7 @@ def comma_separated_list(x: str ) -> list:
 # TODO: move elsewhere
 # _____________________________________________________________________________________________________ #
 
-def validate_kraken_db(path_str:Union[str|Path]):
+def validate_kraken_db(path_str:Union[str|Path]) -> Union[Path|None]:
     """Checks if the provided path represents a kraken2 directory """
     path = Path(path_str)
 
@@ -278,6 +278,7 @@ class ApolloMapping(Pipeline):
     accession_options: list = field(default_factory=list)
     cladegroup_options: list = field(default_factory=list)
     clade_options: list = field(default_factory=list)
+    species_to_cladegroup_options: dict = field(default_factory=dict)
 
     def _set_argument_choices(self) -> None:
         """ assign choices for argparse arguments from default reference-tsv """
@@ -295,11 +296,19 @@ class ApolloMapping(Pipeline):
         self.accession_options = accessions
         self.accession_options = list(sorted(set(self.accession_options)))
 
+        # list of all (unique) cladegroup names
         self.cladegroup_options = df.cladegroup.dropna().unique().tolist()
+        #raise Exception( list(df[["cladegroup","species"]].dropna().drop_duplicates().itertuples(index=None,name=None)) )
+        # (slugified) species to cladegroup name: some --flags are only valid for species with defined cladegroups
+        _iter = df[["cladegroup","species"]].dropna().drop_duplicates().itertuples(index=None,name=None)
+        lookup = dict([ (slugify_str_choice_type(species),clg) for clg,species in _iter ])
+        self.species_to_cladegroup_options = lookup
+
         # TODO: clade should become unique
         # TODO: clade should be set when cladegroup is set
         clades = df.clade.dropna().unique().tolist()
         self.clade_options = clades + [ "_".join(c.split()) for c in clades ]
+
 
     def _assign_juno_library_pipeline_input_arguments_to_named_group(self):
         """ reshuffle generic Pipeline arguments into named groups [1/2] """
@@ -468,9 +477,10 @@ class ApolloMapping(Pipeline):
         )
 
         # TODO: this one should rewite SPECIES_REFERENCE_TSV and ASSEMBLY_REFERENCE_TSV
-        label_expert_arg(mutexcl_group.add_argument)(
+        #label_expert_arg(mutexcl_group.add_argument)(
+        label_expert_arg(self.parser.add_argument)(
             "--custom-reference-dataset",
-            type=Path, # is_valid_reference_dataset
+            type=as_argparse_type(validate_reference_dataset),
             metavar="[PATH]",
             default=None,
             dest="custom_reference_dataset",
@@ -687,7 +697,7 @@ class ApolloMapping(Pipeline):
         argument_group = self.parser.add_argument_group('Particular use-case options')
         preset_workflow_group = argument_group.add_mutually_exclusive_group(required=False)
 
-        preset_workflow_group.add_argument(
+        label_notimplemented_arg(preset_workflow_group.add_argument)(
             "--ISO",
             action="store_true",
             dest="ISO",
@@ -695,7 +705,7 @@ class ApolloMapping(Pipeline):
             help="Fallback to ISO-certified part(s) of the pipeline"
         )
 
-        preset_workflow_group.add_argument(
+        label_notimplemented_arg(preset_workflow_group.add_argument)(
             "--ISO-Cauris",
             action="store_true",
             dest="ISO_Cauris",
@@ -703,7 +713,7 @@ class ApolloMapping(Pipeline):
             help="Fallback to ISO-certified part(s) of the pipeline for C.auris (and disallow non-compatible arguments)"
         )
 
-        label_notimplemented_arg(preset_workflow_group.add_argument)(
+        preset_workflow_group.add_argument(
             "--trigger-multiclade-masking-workflow",
             action="store_true",
             default=False,
@@ -787,7 +797,12 @@ class ApolloMapping(Pipeline):
         return mmidx
 
     def validate_apollo_reference(self,args=argparse.Namespace) -> bool:
-        """ TODO validate ... """
+        """ validate provided arguments to the apollo multi-reference dataset concept """
+
+        if args.custom_reference_dataset:
+            # rewire "softcoded" path in CONFIG
+            CONFIG['apollo_reference_db_dir'] = args.custom_reference_dataset
+
         if args.custom_reference_fasta:
             if args.skip_reference_selection:
                 self.identify_species_index = None
@@ -914,12 +929,18 @@ class ApolloMapping(Pipeline):
                 # hard-coded parameterization of analyses of C.auris clade samples
                 pass
         elif args.trigger_multiclade_masking_workflow:
+            # --trigger-multiclade-masking-workflow requires:
+            #   provided --species (solved generically higher up)
+            #   AND --species should be of type multiclade
+            if args.forced_species not in self.species_to_cladegroup_options.keys():
+                msg = f"provided spcies '{args.forced_species}' has no defined multi-clade logics"
+                self.parser.error(msg)
+
             # Preset to multiclade masking workflow
             # Disables the standard QC/surveillance, and heads directly to relevant parts
             args.skip_kraken = True
             args.skip_reference_selection = True
             args.skip_multiclade_strain_mapping = True
-
 
         # re'validate' in order to get default value for kraken.db_dir
         args.db_dir = validate_kraken_db(args.db_dir)
