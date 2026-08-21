@@ -151,7 +151,7 @@ def validate_kraken_db(path_str:Union[str|Path]) -> Union[Path|None]:
         "database75mers.kmer_distrib",
         "hash.k2d",
         "inspect.txt",
-        "ktaxonomy.tsv",
+        #"ktaxonomy.tsv", # optional and/or named different in distinct databases
         "opts.k2d",
         "seqid2taxid.map",
         "taxo.k2d",
