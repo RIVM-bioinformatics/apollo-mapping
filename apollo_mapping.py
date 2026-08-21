@@ -37,6 +37,8 @@ from apollo_reference.dataframes import (
     read_reference_species_and_assembly_df,
     FASTQ_REFERENCE_TSV
 )
+from apollo_reference.configuration import ASSEMBLY_REFERENCE_TSV
+
 from juno_library import Pipeline
 from rivm_ids_swc_argparseutils.actions import DynamicHelpTopicAction, DynamicHelpTopicShowMarkDownAction
 from rivm_ids_swc_argparseutils.parsers.hierarchicalconfigparser import SnakemakeParser
@@ -59,6 +61,9 @@ CONFIG = {
     'apollo_reference_db_dir': Path(REFERENCE_DATA_DIR),
 }
 
+#
+#def validate_reference_dataset(*args,**kwargs):
+#    return apollo_reference.__path__[0]
 # _____________________________________________________________________________________________________ #
 # TODO: move elsewhere
 # _____________________________________________________________________________________________________ #
@@ -185,11 +190,14 @@ class DynamicHelpSpeciesAction(DynamicHelpTopicAction):
         df.drop(columns=['ignore','literature','recent_name'], inplace=True)
         # pitch in MT origin from reference assembly information
         dfasm = read_reference_assembly_df()
+        tsv_source_attrs = (df.attrs["tsv_source"][0], dfasm.attrs["tsv_source"][0])
         df = pd.merge(df, dfasm[['reference','taxid','MT_source']], on='reference', how='left')
         df['taxid'] = df['taxid'].astype('Int64')
         df.drop(columns=['mitochondrion'], inplace=True)
         df.rename(columns={'MT_source':'mitochondrion'}, inplace=True)
-        return tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
+        df.attrs["tsv_source"] = tsv_source_attrs
+        header = f"# read from: {df.attrs['tsv_source']}"
+        return header + "\n" + tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
 
 class DynamicHelpAssemblydataAction(DynamicHelpTopicAction):
     def generate_content(self) -> str:
@@ -198,7 +206,8 @@ class DynamicHelpAssemblydataAction(DynamicHelpTopicAction):
         df = read_reference_species_and_assembly_df()
         df.drop(columns=['mitochondrion','MT_num','MT_assembly'], inplace=True)
         df.rename(columns={'MT_source':'MT'}, inplace=True)
-        return tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
+        header = f"# read from: {df.attrs['tsv_source']}"
+        return header + "\n" + tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
 
 class DynamicHelpCladesAction(DynamicHelpTopicAction):
     def generate_content(self) -> str:
@@ -209,7 +218,8 @@ class DynamicHelpCladesAction(DynamicHelpTopicAction):
         df.drop(columns=['mitochondrion','MT_num','MT_assembly'], inplace=True)
         df.rename(columns={'MT_source':'MT'}, inplace=True)
         df.sort_values(['cladegroup','is_primary','clade'],ascending=[True,False,True],inplace=True)
-        return tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
+        header = f"# read from: {df.attrs['tsv_source']}"
+        return header + "\n" + tabulate(df, headers='keys', showindex=False, intfmt="d", tablefmt='psql')
 
 class DynamicHelpAvailableFastqAction(DynamicHelpTopicAction):
     def generate_content(self) -> str:
@@ -477,7 +487,7 @@ class ApolloMapping(Pipeline):
             help="Custom Reference genomes to use (in tsv format); overrules the default supported reference set",
         )
 
-        # TODO: this one should rewite SPECIES_REFERENCE_TSV and ASSEMBLY_REFERENCE_TSV
+        # TODO: this one should rewite/modify the paths to SPECIES_REFERENCE_TSV and ASSEMBLY_REFERENCE_TSV
         #label_expert_arg(mutexcl_group.add_argument)(
         label_expert_arg(self.parser.add_argument)(
             "--custom-reference-dataset",
@@ -793,7 +803,10 @@ class ApolloMapping(Pipeline):
             self.parser.error(''+msg)
 
         # validate multireference dataset at the actual file content level
-        dfasm = read_reference_assembly_df()
+        ASSEMBLY_REFERENCE_TSV_BASE = os.path.basename(ASSEMBLY_REFERENCE_TSV)
+        tsv = os.path.join(CONFIG['apollo_reference_db_dir'],ASSEMBLY_REFERENCE_TSV_BASE)
+        dfasm = read_reference_assembly_df(tsv)
+
         try:
             validate_reference_dataset(CONFIG['apollo_reference_db_dir'], dfasm)
         except FileNotFoundError as e:
@@ -807,7 +820,6 @@ class ApolloMapping(Pipeline):
 
     def validate_apollo_reference(self,args=argparse.Namespace) -> bool:
         """ validate provided arguments to the apollo multi-reference dataset concept """
-
         if args.custom_reference_dataset:
             # rewire "softcoded" path in CONFIG
             CONFIG['apollo_reference_db_dir'] = args.custom_reference_dataset
@@ -823,8 +835,12 @@ class ApolloMapping(Pipeline):
             self.species_reference = os.path.abspath(args.custom_reference_fasta)
             self.forced_species = True
 
-        elif not args.custom_reference_tsv:
+        elif not args.custom_reference_tsv and not args.custom_reference_dataset:
             # vanilla: run with standard multireference dataset
+            self.identify_species_index = self._get_mmidx_path()
+
+        elif args.custom_reference_dataset:
+            # "external" multireference dataset provided
             self.identify_species_index = self._get_mmidx_path()
 
         elif args.custom_reference_tsv:
@@ -852,7 +868,6 @@ class ApolloMapping(Pipeline):
                 """
             print(explanation)
             sys.exit(0)
-
 
     def do_combinatorial_argument_validation(self,args=argparse.Namespace) -> bool:
         """ Combinatorial argument validation post parse_args() which can't be solved directly """
