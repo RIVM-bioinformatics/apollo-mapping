@@ -33,20 +33,51 @@ The pipeline uses the following tools(NOT COMPLETE):
 
 ## Installation
 
-### using hatch
+### 1. clone repo (and activate the correct branch)
 ```bash
 git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
 cd apollo-mapping
-pip install --user hatch 
-pip install --user hatch-conda
+git checkout pre-v0.5.0-wrapup
+```
+
+### 2a. verify if hatch is already installed system-wide; if so, skip steps 2a-b-c
+```bash
+hatch --version
+```
+
+### 2b. prepare installation using hatch on the RIVM's HPC (where default conda env is interfering with hatch)
+```bash
+# On "academische werkplek" there's interference with (mini)conda, giving this error message:
+# '''error: failed to remove file `/mnt/miniconda/lib/python3.12/site-packages/idna-3.3.dist-info/INSTALLER`: Read-only file system (os error 30)'''
+export PYTHONNOUSERSITE=1
+export HATCH_DATA_DIR="$HOME/.hatch_isolated"
+export HATCH_CACHE_DIR="$HOME/.hatch_isolated/cache"
+# please verify the correct pyproject.toml project.requires-python version is used!
+conda create -y -p ./local_conda python=3.10
+conda activate ./local_conda
+pip install hatch hatch-conda
+```
+
+### 2c. install hatch (on vanilla linux/ubuntu servers)
+```bash
+pip install --user hatch hatch-conda
+```
+
+### 3. create and activate hatch environment
+```bash
 hatch env create
 hatch shell
 ```
 
-### using conda
+In case you have still/already an hatch environment (Environment `default` already exists), remove it first
+```bash
+hatch env remove default
+```
+
+### Why not using the vanilla conda?
 
 Conda installation - vanilla for most RIVM snakemake repo's - is **not** the preferred installation way anymore for apollo-mapping.
-It's possible that conda installation will work, but due to increased usage inter-repo dependencies it might be obsolute or even broken.
+It's possible that conda installation will work, but due to increased usage of inter-repo dependencies it might be obsolete or even broken.
 
 ## Parameters & Usage
 
@@ -94,7 +125,7 @@ python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/locatio
 - Make sure you've write permission in designated output dirs.
 - Preferably, know a little bit on snakemake (in order to paralellize and thereby speedup your workflow)
 
-# Example for multiclade masking (sub)worflow
+# Example for multiclade masking (sub)worflow (assuming you've selected the appropriate input data yourself)
 
 rootdatadir=$HOME/RIVM
 input=$rootdatadir/data-apollo-reference/test-fastq-input-cauris-clades
@@ -114,7 +145,7 @@ do
 done | bedtools sort | bedtools merge > /tmp/softclipped-I-II-IV-V-VI.bed
 
 
-# Example for multiclade analyses worflow
+# Example for multiclade analyses worflow (assuming you've selected the appropriate input data yourself)
 
 rootdatadir=$HOME/RIVM
 input=$rootdatadir/data-apollo-reference/test-fastq-input-cauris-clades
@@ -124,6 +155,16 @@ python3 apollo_mapping.py -i $input -o $output \
     --clg cauris --skip-kraken \
     --snakemake-args "cores=1" "nodes=1" --dryrun
 
+
+# Example pipeline run based on testdata (on the RIVM cluster)
+
+input=/mnt/scratch_dir/hofmansj/projects/apollo_pipelines/testdata_cauris/251121_VH01799_343_AAHKCJYM5_0004
+output=$HOME/my_scratch_dir/test-apollo-output
+mkdir -p $output
+python3 apollo_mapping.py -i $input -o $output \
+    --local --no-containers \
+    --clg cauris --skip-kraken \
+    --snakemake-args "cores=1" "nodes=1" --dryrun
 
 
 ```
