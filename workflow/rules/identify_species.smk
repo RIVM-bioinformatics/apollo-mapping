@@ -16,8 +16,8 @@ if config.get("skip_reference_selection",None) == "False":
             sam=OUT + "/reference/{sample}__minimap2.sam"
         message:
             "map reads to identify-species-index {input.index} for sample {wildcards.sample}"
-        #conda:
-        #    "../envs/bwa_samtools.yaml"
+        conda:
+            "../envs/minimap2.yaml"
         log:
             OUT + "/log/identify_species/minimap2_{sample}.log",
         threads: 10 #config["threads"]["other"]
