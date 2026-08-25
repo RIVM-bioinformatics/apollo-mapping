@@ -488,8 +488,8 @@ class ApolloMapping(Pipeline):
         )
 
         # TODO: this one should rewite/modify the paths to SPECIES_REFERENCE_TSV and ASSEMBLY_REFERENCE_TSV
-        #label_expert_arg(mutexcl_group.add_argument)(
-        label_expert_arg(self.parser.add_argument)(
+        # !important! add to (the named) _group, not to mutexcl_group
+        label_expert_arg(_group.add_argument)(
             "--custom-reference-dataset",
             type=as_argparse_type(validate_reference_dataset),
             metavar="[PATH]",
