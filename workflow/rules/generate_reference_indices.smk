@@ -24,10 +24,10 @@ rule bwa_index_ref:
         ref_type="species|strains"
     message:
         "Indexing reference genome [samtools faidx]: reference/{wildcards.ref_type}/{wildcards.prefix}.fa"
-    #conda:
-    #    "../envs/bwa_samtools.yaml"
-    #container:
-    #    "docker://staphb/bwa:0.7.17"
+    conda:
+        "../envs/bwa_samtools.yaml"
+    container:
+        "docker://staphb/bwa:0.7.17"
     log:
         OUT + "/log/indices/{ref_type}_{prefix}_bwa_index.log"
     threads:
@@ -46,10 +46,10 @@ rule samtools_faidx_ref:
         ref_type="species|strains"
     message:
         "Indexing reference genome [samtools faidx]: reference/{wildcards.ref_type}/{wildcards.prefix}.fa"
-    #conda:
-    #    "../envs/bwa_samtools.yaml"
-    #container:
-    #    "docker://staphb/bwa:0.7.17"
+    conda:
+        "../envs/bwa_samtools.yaml"
+    container:
+        "docker://staphb/bwa:0.7.17"
     log:
         OUT + "/log/indices/{ref_type}_{prefix}_samtools_faidx.log"
     threads:
