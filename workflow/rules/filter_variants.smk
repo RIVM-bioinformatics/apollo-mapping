@@ -62,7 +62,7 @@ rule filter_variants:
         ##yaml_qual_fitted=rules.curvefitting_on_quality_score.output.yaml,
         yaml_cov_prior=rules.est_cov_distribution_specs.output,
         yaml_qual_prior=rules.est_qual_distribution_specs.output,
-        bed = OUT + "/reference/species/cauris-GCA_002759435.3-blacklist.bed",
+        bed=get_blacklist_bed,
     output:
         vcf=OUT + "/variants/filtered/{sample}_on_{ref_type}-labeled.vcf",
     message:
