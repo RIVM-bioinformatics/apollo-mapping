@@ -18,3 +18,12 @@ Since the workflows that generate this blacklist aren't fully automated (yet), f
 - At this moment, data/cauris-GCA_002759435.3-vs-fastq-blacklist.bed still lacks clade III data (since we've failed to identify a publicly available fastq sample).
 - At this moment, data/cauris-GCA_002759435.3-vs-WGA-blacklist.bed is still empty (NA)
 
+### code snippet to run when first-ever piperun fails on this scenario
+
+- assuming your working directory is (freshly cloned) apollo_mapping
+- assuming the path to your reference species database is /mnt/db/apollo/reference
+
+```bash
+mkdir -p /mnt/db/apollo/reference/multiclade/
+cp data/*.bed  /mnt/db/apollo/reference/multiclade/
+```
