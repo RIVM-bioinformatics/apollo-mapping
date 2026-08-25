@@ -42,6 +42,18 @@ def get_filter_thresholds(wildcards, input:list) -> Dict[str,float]:
     })
     return d
 
+
+def get_blacklist_bed(wildcards) -> str:
+    """ get the full path to the blacklist for variant filtering """
+    checkpoint_path = checkpoints.assign_reference.get(sample=wildcards.sample).output.reference
+
+    # TODO: make sure blacklist filename is DYNAMICALLY obtained
+    #       At this moment there is only a single multispecies, so current hard-coded return will work just fine.
+    #       In rules.filter_variants.run it is checked (config["trigger_multiclade_masking_workflow"])
+    #       if the bedfile is being used or is silently omitted from usage.
+    return f"{OUT}/reference/species/cauris-GCA_002759435.3-blacklist.bed"
+
+
 rule filter_variants:
     input:
         vcf=rules.vcflib_breakmulti_wave.output.vcf,
@@ -50,12 +62,6 @@ rule filter_variants:
         ##yaml_qual_fitted=rules.curvefitting_on_quality_score.output.yaml,
         yaml_cov_prior=rules.est_cov_distribution_specs.output,
         yaml_qual_prior=rules.est_qual_distribution_specs.output,
-        # TODO: make sure blacklist filename is DYNAMICALLY obtained
-        #       at this moment there is only a single multispecies, so this will work just fine
-        #       but of course this is extremely fragile.
-        #       Due to limited time, it was decided NOT to completely automate the multi-clade concept.
-        #       And this is a (very) sad example of it.
-        #       bed = "/tmp/softclipped-I-II-IV-V-VI.bed"
         bed = OUT + "/reference/species/cauris-GCA_002759435.3-blacklist.bed",
     output:
         vcf=OUT + "/variants/filtered/{sample}_on_{ref_type}-labeled.vcf",
