@@ -1,4 +1,10 @@
 import os
+import shutil
+
+# get path in the main conda environment to apollo-match-reference executable
+APOLLO_MATCH_REFERENCE_BINARY = shutil.which("apollo-match-reference")
+if not APOLLO_MATCH_REFERENCE_BINARY:
+    raise RuntimeError("can't find apollo-match-reference in main environment")
 
 if config.get("skip_reference_selection",None) == "False":
     # vanilla: minimap2 --> match_ref --> assign_reference
@@ -41,10 +47,11 @@ if config.get("skip_reference_selection",None) == "False":
             prefix=OUT + "/reference/{sample}",
         message:
             "identify species using apollo-match-reference for sample {wildcards.sample}"
-        #conda:
-        #    "../envs/bwa_samtools.yaml"
-        #container:
-        #    "docker://staphb/bwa:0.7.17"
+        conda:
+            # TODO: strictly spoken, only samtools is needed in the env
+            "../envs/bwa_samtools.yaml"
+        container:
+            "docker://staphb/bwa:0.7.17"
         log:
             OUT + "/log/identify_species/match-ref_{sample}.log",
         threads:
@@ -53,7 +60,7 @@ if config.get("skip_reference_selection",None) == "False":
             mem_gb=8    #config["mem_gb"]["other"],
         shell:
             """
-    apollo-match-reference {input.sam} {params.prefix} 2>&1>{log}
+    {APOLLO_MATCH_REFERENCE_BINARY} {input.sam} {params.prefix} >{log} 2>&1
             """
 
     # !important!
@@ -81,15 +88,31 @@ if config.get("species_reference",None) not in (None,"None"):
             reference=OUT + "/reference/{sample}-forced_references.yml"
         log:
             OUT + "/log/identify_species/forced-ref_{sample}.log",
-        run:
-            cmd_create_dir="mkdir -p {params.outdir}; "
-            cmd="""apollo-match-reference {params.prefix} --species-reference {params.species_reference}"""
-            if params.clade_reference not in (None,"None"):
-                cmd+= " --clade-reference {params.clade_reference}"
-            if params.exterior_fasta == "True":
-                cmd+= " --custom"
-            cmd+= " 2>&1>{log}"
-            shell(cmd_create_dir+cmd)
+        #run:
+        #    cmd_create_dir="mkdir -p {params.outdir}; "
+        #    cmd="""{APOLLO_MATCH_REFERENCE_BINARY} {params.prefix} --species-reference {params.species_reference}"""
+        #    if params.clade_reference not in (None,"None"):
+        #        cmd+= " --clade-reference {params.clade_reference}"
+        #    if params.exterior_fasta == "True":
+        #        cmd+= " --custom"
+        #    cmd+= " 2>&1>{log}"
+        #    shell(cmd_create_dir+cmd)
+        shell:
+            """
+            mkdir -p {params.outdir}
+            # base command
+            CMD="{APOLLO_MATCH_REFERENCE_BINARY} {params.prefix} --species-reference {params.species_reference}"
+            # optionally, expand with clade_reference
+            if [ "{params.clade_reference}" != "None" ] && [ -n "{params.clade_reference}" ]; then
+                CMD="$CMD --clade-reference {params.clade_reference}"
+            fi
+            # optionally, expand with exterior_fasta
+            if [ "{params.exterior_fasta}" = "True" ]; then
+                CMD="$CMD --custom"
+            fi
+            # execute
+            eval $CMD > {log} 2>&1
+            """
 
     # !important!
     CONDITIONAL_TARGETS += rules.forced_ref.output
