@@ -75,7 +75,7 @@ if config.get("species_reference",None) not in (None,"None"):
             r1=lambda wildcards: SAMPLES[wildcards.sample]["R1"],
             r2=lambda wildcards: SAMPLES[wildcards.sample]["R2"],
         params:
-            outdir=OUT + "/reference",
+            #outdir=OUT + "/reference",
             prefix=OUT + "/reference/{sample}",
             # overtake those user-specified to CLI entry point apollo_mapping.py
             species_reference=config["species_reference"],
@@ -88,6 +88,9 @@ if config.get("species_reference",None) not in (None,"None"):
             reference=OUT + "/reference/{sample}-forced_references.yml"
         log:
             OUT + "/log/identify_species/forced-ref_{sample}.log",
+        conda:
+            # TODO: strictly spoken, only samtools is needed in the env
+            "../envs/bwa_samtools.yaml"
         #run:
         #    cmd_create_dir="mkdir -p {params.outdir}; "
         #    cmd="""{APOLLO_MATCH_REFERENCE_BINARY} {params.prefix} --species-reference {params.species_reference}"""
@@ -99,7 +102,6 @@ if config.get("species_reference",None) not in (None,"None"):
         #    shell(cmd_create_dir+cmd)
         shell:
             """
-            mkdir -p {params.outdir}
             # base command
             CMD="{APOLLO_MATCH_REFERENCE_BINARY} {params.prefix} --species-reference {params.species_reference}"
             # optionally, expand with clade_reference
