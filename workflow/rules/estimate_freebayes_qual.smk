@@ -32,20 +32,19 @@ SIMULATED_GENOME_FNAME = SIMULATED_GENOME_PREFIX + ".fa"
 from snakemake.rules import Rule
 
 CONDA_ENV_MASON = "../envs/mason.yaml"
+CONDA_ENV_BCF = "../envs/bcftools.yaml"
+CONTAINER_BCF = "" #"docker://PATH/TO/BCF/CONTAINER:<PINNEDVERSION>"
+CONTAINER_MASON = "" #"docker://PATH/TO/MASON/CONTAINER:<PINNEDVERSION>"
 
 def apply_mason_rule_defaults(rule_obj:Rule) -> None:
     """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
     rule_obj.threads = config["threads"]["other"]
     rule_obj.resources = {"mem_gb": config["mem_gb"]["other"]}
-    rule_obj.conda = CONDA_ENV_MASON
-    rule_obj.container = "" #"docker://PATH/TO/MASON/CONTAINER:<PINNEDVERSION>"
 
 def apply_bcftools_rule_defaults(rule_obj:Rule) -> None:
     """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
     rule_obj.threads = config["threads"]["other"]
     rule_obj.resources = {"mem_gb": config["mem_gb"]["other"]}
-    rule_obj.conda = "../envs/bcftools.yaml"
-    rule_obj.container = "" #"docker://PATH/TO/MASON/CONTAINER:<PINNEDVERSION>"
 
 # ----------------------------------------------------------------------------------------
 # SeQan / mason: generate a simulated minified genome and simulated PE reads from it
@@ -61,8 +60,6 @@ rule mason_genome:
     log:
         OUT + "/log/simulated/" + rule_name + ".log"
     conda:
-        # !important! snakemake inspects rules upon initialization for which conda envs to build
-        #             so, in the first "mason" rule, specify it explicitly.
         CONDA_ENV_MASON
     shell:
         """
@@ -84,7 +81,7 @@ rule mason_variator:
     params:
         snp_rate=0.001
     conda:
-        "../envs/mason.yaml"
+        CONDA_ENV_MASON
     message:
         "introduce random variation in 100kb simulated genome"
     log:
@@ -144,7 +141,7 @@ rule mason_simulator:
         read_length=get_dynamic_param_read_length,
         depth=get_dynamic_param_read_depth
     conda:
-        "../envs/mason.yaml"
+        CONDA_ENV_MASON
     message:
         "simulate PE fastq data for {wildcards.sample} on '{wildcards.ref_type}' from {input.fa}"
     log:
@@ -204,6 +201,8 @@ rule bcftools_bgzip_index_vcf:
         OUT + "/log/simulated/" + rule_name + ".log"
     message:
         "Bgzip and index VCF file: "+ SIMULATED_GENOME_FNAME
+    conda:
+        CONDA_ENV_BCF
     shell:
         """
         bcftools view  {input} -O z -o {output.vcf_gz}; bcftools index {output.vcf_gz};
@@ -291,6 +290,8 @@ rule est_qual_filter_vcf:
         OUT + "/log/simulated/{sample}-on-{ref_type}-" + rule_name + ".log"
     message:
         "Filter variants using bcftools {wildcards.sample} on '{wildcards.ref_type}' ["+rule_name+"]"
+    conda:
+        CONDA_ENV_BCF
     shell:
         ## realize this filter that "discards highly unlikely SNPs" is not stringent enough
         #bcftools filter  -i 'INFO/AF >= 0.10' {input} | bcftools view -v snps  -o  {output}
