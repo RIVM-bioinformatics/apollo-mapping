@@ -27,7 +27,7 @@ from version import __package_name__, __version__
 import apollo_reference
 from apollo_reference.referencedata import (
     ProvidedSchema,
-    validate_reference_dataset,
+    validate_reference_dataset as actual_validate_reference_dataset,
     validate_reference_dataset_multiclade_requirements,
     get_identify_species_mmidx_relpath,
 )
@@ -56,18 +56,16 @@ TOOL_PARAMS_YAML = yaml.safe_load(open(Path(__file__).parent.joinpath("config/to
 REFERENCE_DATA_DIR = yaml.safe_load(open(APOLLO_REFERENCE_CONFIG_YAML))['reference_data_dir']
 KRAKEN_DB_DIR = TOOL_PARAMS_YAML['identify_impurity_using_kraken']['identify_impurity']['kraken_db']
 
+# configuration (juno-library Pipeline class)
 CONFIG = {
     'kraken_db': Path(KRAKEN_DB_DIR),
     'apollo_reference_db_dir': Path(REFERENCE_DATA_DIR),
 }
 
-#
-#def validate_reference_dataset(*args,**kwargs):
-#    return apollo_reference.__path__[0]
+
 # _____________________________________________________________________________________________________ #
 # TODO: move elsewhere
 # _____________________________________________________________________________________________________ #
-
 
 def as_argparse_type(validator):
     """ convert any validator (with a single argument) into an argparse type conversion function """
@@ -83,7 +81,7 @@ import functools
 import inspect
 
 def validate_arg(validator, arg_name=None):
-    """ """
+    """ convert any validator (with a single argument) into a function decorator """
     def decorator(func):
         sig = inspect.signature(func)
         # define target_name: the given one OR defaulting to the first parameter od the function
@@ -161,6 +159,28 @@ def validate_kraken_db(path_str:Union[str|Path]) -> Union[Path|None]:
         raise ValueError(msg)
 
     return path
+
+# ---------------------------------------------------------------------------------------- #
+# customized validator function(s)
+# ---------------------------------------------------------------------------------------- #
+
+def validate_reference_dataset(dbpath:str) -> str:
+    """ extended function validate_reference_dataset in order to support --custom-reference-dataset
+
+    Import was defined as "import validate_reference_dataset as actual_validate_reference_dataset"
+
+      - validate_reference_dataset is linked to the default location defined in
+        apollo-reference/config/referencedata.yaml.
+      - The validate_reference_dataset automatically reads, if not provided specifically,
+        the reference_assembly_data.tsv dataframe contained within this folder.
+      - This needs to be bypassed by providing this dataframe as an instantiated object
+
+    """
+    default_df_name = os.path.basename(ASSEMBLY_REFERENCE_TSV)
+    dfpath = os.path.join(dbpath, default_df_name)
+    #raise Exception(dfpath)
+    df = read_reference_assembly_df(dfpath)
+    return actual_validate_reference_dataset(dbpath,df=df)
 
 # ---------------------------------------------------------------------------------------- #
 # helper functions
@@ -799,7 +819,7 @@ class ApolloMapping(Pipeline):
         try:
             validate_reference_dataset(CONFIG['apollo_reference_db_dir'])
         except FileNotFoundError as e:
-            msg = "can't find required subdirectory in 'apollo_reference_db_dir': %s" % str(e)
+            msg = "can't find proper minimap2 index in 'apollo_reference_db_dir': %s" % str(e)
             self.parser.error(''+msg)
 
         # validate multireference dataset at the actual file content level
@@ -808,7 +828,8 @@ class ApolloMapping(Pipeline):
         dfasm = read_reference_assembly_df(tsv)
 
         try:
-            validate_reference_dataset(CONFIG['apollo_reference_db_dir'], dfasm)
+            # !important! call the actual validate_reference_dataset function
+            actual_validate_reference_dataset(CONFIG['apollo_reference_db_dir'], dfasm)
         except FileNotFoundError as e:
             msg = "can't find required file in 'apollo_reference_db_dir': %s" % str(e)
             self.parser.error(''+msg)
@@ -846,6 +867,14 @@ class ApolloMapping(Pipeline):
         elif args.custom_reference_tsv:
             explanation = """
                 The option --custom-reference-tsv <TSV> is not supported (yet), but is here for explanatory purposes.
+    
+    
+                First: are you sure you haven't mixed up with --custom-reference-dataset ?
+                    - when working outside of RIVM's HPC environment
+                    - you've succesfully downloaded /your/path/to/referencedataset using apollo-reference
+                    - you want to use this dataset as the reference species
+                    - and you won't or haven't patched apollo-reference's config/referencedata.yaml
+                    - in that case, please use --custom-reference-dataset, not --custom-reference-tsv
     
                 When provided, the TSV should be validated that it is readable by:
                     df = read_reference_species_df()
