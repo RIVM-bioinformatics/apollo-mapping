@@ -1,5 +1,27 @@
 """ python code to filter variants, which is to complex for the shell: directive """
+
+# Exact code below was first a run: directive, which does not support conda environment.
+# Here, arguments known in the *.smk are extracted from global snakemake
 from snakemake.shell import shell
+params = snakemake.params
+input = snakemake.input
+output = snakemake.output
+log = snakemake.log
+
+class AttrDict(dict):
+    """ mixin between dictionary and object, with both options for key lookup """
+
+    # TODO: refactor / move elsewhere!
+    # https://stackoverflow.com/questions/4984647/accessing-dict-keys-like-an-attribute
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+params.ths = AttrDict(params.ths)
+
+# -----------------------------------------------------------------
+# start of originally written run: directive
+# -----------------------------------------------------------------
 
 # gather extra header lines
 extra_header_lines = []
