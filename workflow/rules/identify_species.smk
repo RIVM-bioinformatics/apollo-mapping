@@ -246,7 +246,7 @@ if MultiReferenceProvider.EXTERIOR_FASTA and config["clade_reference"] != "None"
     rule copy_external_strain_genome:
         input:
             config["clade_reference"]
-        input:
+        output:
             os.path.join(OUT, "reference/strains", os.path.basename(config["clade_reference"]))
         message:
             "copy externally provided multiclade strain genome"
