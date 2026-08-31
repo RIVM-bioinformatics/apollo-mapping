@@ -2,6 +2,7 @@ import yaml
 import os
 from typing import List, Dict, Any, Union, Optional
 from collections.abc import Callable
+from workflow.helpers.generic_workflow_methods import check_rule_environments
 ##from workflow.helpers.generic_workflow_methods import get_rule_name
 
 # define paths to workflow & scripts directories (helpers & tools not in conda environment!)
@@ -243,6 +244,10 @@ include: "workflow/rules/filter_variants.smk"
 # completion part of the pipeline
 include: "workflow/rules/multiqc.smk"
 
+
+# EOF workflow construction: QC
+check_rule_environments(workflow=workflow,env_type="conda")     # preferably strict=True
+check_rule_environments(workflow=workflow,env_type="container") # preferably strict=True
 
 if False:
     # IDEA/CONCEPT: pre-define "prefixes" to be used for log files, output (sub)directories etc.
