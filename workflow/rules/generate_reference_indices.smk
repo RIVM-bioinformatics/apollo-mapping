@@ -69,6 +69,10 @@ rule fai_to_fal:
         OUT + "/reference/{ref_type}/{prefix}.fa.fal"
     wildcard_constraints:
         ref_type="species|strains"
+    params:
+        # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+        conda_not_needed=True,
+        container_not_needed=True
     message:
         "Indexing reference genome [fai to fal]: reference/{wildcards.ref_type}/{wildcards.prefix}.fa"
     log:
@@ -88,6 +92,10 @@ rule fai_to_bed:
         OUT + "/reference/{ref_type}/{prefix}.fa.bed"
     wildcard_constraints:
         ref_type="species|strains"
+    params:
+        # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+        conda_not_needed=True,
+        container_not_needed=True
     message:
         "Indexing reference genome [fai to bed]: reference/{wildcards.ref_type}/{wildcards.prefix}.fa"
     log:

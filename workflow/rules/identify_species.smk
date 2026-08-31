@@ -127,6 +127,10 @@ if config.get("species_reference",None) not in (None,"None") and config.get("ski
             reference=OUT + "/reference/{sample}-forced_references.yml"
         output:
             reference=OUT + "/reference/{sample}-assigned_references.yml"
+        params:
+            # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+            conda_not_needed=True,
+            container_not_needed=True
         message:
             "assign reference genome for sample {wildcards.sample} [scenario: forced]"
         shell:
@@ -139,6 +143,10 @@ elif config.get("species_reference",None) not in (None,"None"):
             reference=OUT + "/reference/{sample}-forced_references.yml"
         output:
             reference=OUT + "/reference/{sample}-assigned_references.yml"
+        params:
+            # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+            conda_not_needed=True,
+            container_not_needed=True
         message:
             "assign reference genome for sample {wildcards.sample} [scenario: skipped]"
         shell:
@@ -151,6 +159,10 @@ else:
             reference=OUT + "/reference/{sample}-references.yml"
         output:
             reference=OUT + "/reference/{sample}-assigned_references.yml"
+        params:
+            # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+            conda_not_needed=True,
+            container_not_needed=True
         message:
             "assign reference genome for sample {wildcards.sample} [scenario: vanilla]"
         shell:
@@ -168,9 +180,13 @@ rule copy_reference_species_genomes:
     output:
         fa = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}",
         yaml = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
+        # TODO: here blacklist.bed should be stated explicitly!
     params:
         blackistdir = config["apollo_reference_dir"] + "/multiclade",
         refoutdir = OUT + "/reference/species",
+        # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+        conda_not_needed=True,
+        container_not_needed=True
     shell:
         # realize typically many:1 relationship of sample:reference, so file can exist already
         """
@@ -191,6 +207,10 @@ rule copy_reference_strain_genomes:
     output:
         fa = OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}",
         yaml = OUT + "/reference/strains/{reference_strain_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
+    params:
+        # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+        conda_not_needed=True,
+        container_not_needed=True
     shell:
         # realize typically many:1 relationship of sample:reference, so file can exist already
         """
@@ -210,6 +230,10 @@ if MultiReferenceProvider.EXTERIOR_FASTA:
             config["species_reference"]
         output:
             os.path.join(OUT, "reference/species", os.path.basename(config["species_reference"]))
+        params:
+            # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+            conda_not_needed=True,
+            container_not_needed=True
         message:
             "copy externally provided reference genome"
         shell:
