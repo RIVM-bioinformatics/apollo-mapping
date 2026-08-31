@@ -193,10 +193,13 @@ rule copy_reference_species_genomes:
         if [ ! -f {output.fa} ]; then
             sleep 2;
             cp {input} {output.fa};
-            chmod u+w {output.fa};
             cp {input}.accessions.yaml {output.yaml};
             # TODO: refactor to not copying ALL blacklist files in the future
             cp {params.blackistdir}/*.bed {params.refoutdir};
+            # make sure files are (re)writable by snakemake
+            chmod ug+w {output.fa};
+            chmod ug+w {output.yaml};
+            chmod ug+w {params.refoutdir}/*.bed;
         fi
         """
 
