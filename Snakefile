@@ -44,6 +44,7 @@ localrules:
     copy_external_strain_genome
 
 
+# TODO: refactor/move to a more generic place (other file or even other repo)
 class MultiReferenceProvider:
     """ class that based on YSON produced by the checkpoint match_ref orchestrates further scheduling
 
@@ -149,7 +150,7 @@ class MultiReferenceProvider:
     def get_rule_all_targets(cls, wildcards) -> List[str]:
         """ return a list of 'rule all' target results for species and additional strain-specific mappings """
         def fill_template_outfiles(sample:str,ref_type:str):
-            # TODO: once pipeline development has finished
+            # TODO: once pipeline development has finished,
             #       only the truely final exterior leaves of the DAG needs to get specified
             #outfile_template = f"{OUT}/qc_mapping/insertsize/{sample}__{ref_type}_metrics.txt"
             #return [ outfile_template ]
@@ -159,9 +160,6 @@ class MultiReferenceProvider:
                 f"{OUT}/simulated/data/{sample}_on_{ref_type}_priors_COV.yaml",
                 f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.bai",
                 f"{OUT}/mapped_reads/final/{ref_type}-{sample}-mitochondrial.bam.bai",
-                #f"{OUT}/variants/raw/{ref_type}-{sample}.vcf",
-                #f"{OUT}/variants/norm/{ref_type}-{sample}.vcf",
-                #f"{OUT}/mapped_reads/final/{ref_type}-{sample}-nuclear.bam.coverage.bw",
                 f"{OUT}/variants/filtered/{sample}_on_{ref_type}-passed.vcf",
             ]
             return outfile_templates
@@ -250,7 +248,9 @@ check_rule_environments(workflow=workflow,env_type="conda")     # preferably str
 check_rule_environments(workflow=workflow,env_type="container") # preferably strict=True
 
 if False:
-    # IDEA/CONCEPT: pre-define "prefixes" to be used for log files, output (sub)directories etc.
+    # TODO: IDEA/CONCEPT: pre-define "prefixes" to be used for log files, output (sub)directories etc.
+    #       There are other ways of doing thus using get_rule_name(),
+    #       but the POC code below does a similar job
 
     def clean_snakefile_origin(smk_path:str,joiner:str="__") -> str:
         """ Convert the *.smk file path to its de-suffixed name; snakefile itself returns empty string """
