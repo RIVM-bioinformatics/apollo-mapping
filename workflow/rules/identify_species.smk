@@ -179,11 +179,8 @@ rule copy_reference_species_genomes:
         lambda wildcards: PATH_TO_REFERENCES + "/" + wildcards.reference_species_basename
     output:
         fa = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}",
-        yaml = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml"
-        # TODO: here blacklist.bed should be stated explicitly!
+        yaml = OUT + "/reference/species/{reference_species_basename, [^/]+\.(?:fa|fasta|fna)}.accessions.yaml",
     params:
-        blackistdir = config["apollo_reference_dir"] + "/multiclade",
-        refoutdir = OUT + "/reference/species",
         # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
         conda_not_needed=True,
         container_not_needed=True
@@ -194,13 +191,34 @@ rule copy_reference_species_genomes:
             sleep 2;
             cp {input} {output.fa};
             cp {input}.accessions.yaml {output.yaml};
-            # TODO: refactor to not copying ALL blacklist files in the future
-            cp {params.blackistdir}/*.bed {params.refoutdir};
             # make sure files are (re)writable by snakemake
             chmod ug+w {output.fa};
             chmod ug+w {output.yaml};
-            chmod ug+w {params.refoutdir}/*.bed;
         fi
+        """
+
+rule copy_blacklist_bed:
+    # TODO: Once there are multiple species with a multi-strain definition,
+    #       it should depend on {reference_species_basename}
+    #       Please read the general to does that mention the multiclade blacklist approach
+    input:
+        config["apollo_reference_dir"] + "/multiclade" + "/cauris-GCA_002759435.3-blacklist.bed",
+        config["apollo_reference_dir"] + "/multiclade" + "/cauris-GCA_002759435.3-vs-fastq-blacklist.bed",
+        config["apollo_reference_dir"] + "/multiclade" + "/cauris-GCA_002759435.3-vs-WGA-blacklist.bed",
+    output:
+        bed = OUT + "/reference/species/cauris-GCA_002759435.3-blacklist.bed"
+    params:
+        blackistdir = config["apollo_reference_dir"] + "/multiclade",
+        refoutdir = OUT + "/reference/species",
+        # Custom metadata flags to whitelist missing conda/container for check_rule_environments validation function
+        conda_not_needed=True,
+        container_not_needed=True
+    shell:
+        """
+        # TODO: refactor to not copying ALL blacklist files in the future
+        cp {params.blackistdir}/*.bed {params.refoutdir};
+        # make sure files are (re)writable by snakemake
+        chmod ug+w {params.refoutdir}/*.bed;
         """
 
 rule copy_reference_strain_genomes:
@@ -220,8 +238,10 @@ rule copy_reference_strain_genomes:
         if [ ! -f {output.fa} ]; then
             sleep 2;
             cp {input} {output.fa};
-            chmod u+w {output.fa};
             cp {input}.accessions.yaml {output.yaml};
+            # make sure files are (re)writable by snakemake
+            chmod ug+w {output.fa};
+            chmod ug+w {output.yaml};
         fi
         """
 
@@ -240,9 +260,12 @@ if MultiReferenceProvider.EXTERIOR_FASTA:
         message:
             "copy externally provided reference genome"
         shell:
-            """cp {input} {output}"""
-
-    # TODO: generate {output}.accessions.yaml file
+            # TODO: generate {output}.accessions.yaml file; I assume pipeline will crash if not existing
+            """
+            cp {input} {output};
+            # make sure files are (re)writable by snakemake
+            chmod ug+w {output};
+            """
 
 if MultiReferenceProvider.EXTERIOR_FASTA and config["clade_reference"] != "None":
     # explicitly provided EXTERIOR_FASTA (multi)clade reference
@@ -254,6 +277,9 @@ if MultiReferenceProvider.EXTERIOR_FASTA and config["clade_reference"] != "None"
         message:
             "copy externally provided multiclade strain genome"
         shell:
-            """cp {input} {output}"""
-
-    # TODO: generate {output}.accessions.yaml file
+            # TODO: generate {output}.accessions.yaml file; I assume pipeline will crash if not existing
+            """
+            cp {input} {output};
+            # make sure files are (re)writable by snakemake
+            chmod ug+w {output};
+            """
