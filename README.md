@@ -125,6 +125,29 @@ python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/locatio
 - Make sure you've write permission in designated output dirs.
 - Preferably, know a little bit on snakemake (in order to paralellize and thereby speedup your workflow)
 
+# Example for multiclade analyses worflow (assuming you've selected the appropriate input data yourself)
+
+rootdatadir=$HOME/RIVM
+input=$rootdatadir/data-apollo-reference/test-fastq-input-cauris-clades
+output=$rootdatadir/output-cauris-clades-vanilla
+#input=$rootdatadir/data-apollo-reference/test-fastq-input-single-cauris
+#output=$rootdatadir/output-cauris-single-sample
+python3 apollo_mapping.py -i $input -o $output \
+    --local --no-containers \
+    --clg cauris --skip-kraken \
+    --snakemake-args "cores=1" "nodes=1" --dryrun
+
+
+# Example pipeline run based on testdata (on the RIVM cluster)
+
+input=/mnt/scratch_dir/hofmansj/projects/apollo_pipelines/testdata_cauris/251121_VH01799_343_AAHKCJYM5_0004
+output=$HOME/my_scratch_dir/test-apollo-output
+mkdir -p $output
+python3 apollo_mapping.py -i $input -o $output \
+    --local --no-containers \
+    --clg cauris --skip-kraken \
+    --snakemake-args "cores=1" "nodes=1" --dryrun
+
 # Example for multiclade masking (sub)worflow (assuming you've selected the appropriate input data yourself)
 
 rootdatadir=$HOME/RIVM
@@ -145,28 +168,6 @@ do
 done | bedtools sort | bedtools merge > /tmp/softclipped-I-II-IV-V-VI.bed
 
 
-# Example for multiclade analyses worflow (assuming you've selected the appropriate input data yourself)
-
-rootdatadir=$HOME/RIVM
-input=$rootdatadir/data-apollo-reference/test-fastq-input-cauris-clades
-output=$rootdatadir/output-cauris-clades-vanilla
-python3 apollo_mapping.py -i $input -o $output \
-    --local --no-containers \
-    --clg cauris --skip-kraken \
-    --snakemake-args "cores=1" "nodes=1" --dryrun
-
-
-# Example pipeline run based on testdata (on the RIVM cluster)
-
-input=/mnt/scratch_dir/hofmansj/projects/apollo_pipelines/testdata_cauris/251121_VH01799_343_AAHKCJYM5_0004
-output=$HOME/my_scratch_dir/test-apollo-output
-mkdir -p $output
-python3 apollo_mapping.py -i $input -o $output \
-    --local --no-containers \
-    --clg cauris --skip-kraken \
-    --snakemake-args "cores=1" "nodes=1" --dryrun
-
-
 ```
 
 In the (near) future, detailed information about the pipeline can be found in the [documentation](link to other docs). This documentation is mostly suitable for users that have access to the RIVM Linux environment.
@@ -174,13 +175,15 @@ In the (near) future, detailed information about the pipeline can be found in th
 ## Explanation of the output
 * **audit_trail:** Logs of conda, git and the pipeline, a sample sheet, the used parameters and a snakemake report.
 * **clean_fastq:** cleaned fastq files.
-* **identify_species:** Output of kraken and bracken for species identification.
-* **log:** Log with output and error file from the cluster for each Snakemake rule/step that is performed.
+* **identify_species:** Output of kraken and bracken for impurity detection a/o species identification.
+* **log:** Log with output and error file (from the cluster) for each Snakemake rule/step that is performed.
 * **mapped_reads:** Mapping output.
 * **multiqc:** Multiqc output and multiqc html report.
-* **qc_clean_fastq:** Quality control of clean fastq reads.
-* **qc_mapping:** Quality control of mapping.
-* **reference:** Reference genome used.
+* **qc_clean_fastq:** Quality control of clean fastq reads [juno-mapping].
+* **qc_mapping:** Quality control of mapping [juno-mapping].
+* **qc_raw_fastq:** Quality control of raw fastq reads [juno-mapping].
+* **reference:** Reference genome used & reference species identification intermediates
+* **simulated:** Fitted coverage and SNP Quality score distributions based on (depth of the) per-sample fastq 
 * **variant:** Variant calling results.
 
 ## License
@@ -192,6 +195,35 @@ This pipeline is licensed with a AGPL3 license. Detailed information can be foun
 
 ## Acknowledgements
 
+## TODO's
+During the last upgrade of this pipeline, several (obvious) improvements were considered or became evident, that didn't make it into current stable release. See these as recommendations or a TODO list for the next wave of improvements.
+
+- (further) harmonization & compartimentalization of apollo-mapping in relation to other RIVM CIB snakemake pipelines
+  - most noticeably update juno-library to the newest concepts (argparse) used in apollo-mapping
+  - refactor mostly apollo-mapping.py by moving (shared) code to other, generically reuseable repo(s)
+    - rivm-ids-swc-snakeutils
+    - rivm-ids-swc-name_to_be_defined
+    - etc ...
+  - generally, streamline apollo-mapping further with juno-mapping
+    - in both directions, i.e. define submodules)
+    - expand on re-using submodules
+    - most noticeably upgrade "clean_fastq.smk" into "clean-fastq" submodule
+    - most noticeably the future "identify-species" submodule
+    - qc_mapping.smk parse_bbtools* rules should get full paths to workflow/scripts/parse_bbtools*.py
+      - and next delete workflow/scripts/parse_bbtools*.py from apollo-mapping/workflow/scripts directory
+  - general/harmonization: let each snakemake submodule make its own multiqc report
+  - simplify rule definitions
+  - generalize/automate definition of output folders and log files
+- generalize (serious sample quality related) warnings into a single place, preferably the multiqc report
+  - and generalize/harmonize this with other snakemake pipelines and submodules
+- make management of genomic coordinate blacklists more mature
+  - as soon as the 2th multi-clade species becomes a priority, fully automate the generation of blacklists (apollo-reference)
+  - make rule copy_blacklist_bed species-aware (not just copy them all into the output folders of any pipeline)
+- do research on the diversity of genomic properties of the reference sequences this pipeline can tackle
+  - mostly work in apollo-reference
+  - examples: repetitive sequences, diploids and other freaks of nature
+  - named `species` with very low ANI differences (might compromise matchreference.py) 
+- and have a look at minor other TODO's left in the code
 
 ## Contribution guidelines
 Apollo pipelines use a [feature branch workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow). To work on features, create a branch from the `main` branch to make changes to. This branch can be merged to the main branch via a pull request. Hotfixes for bugs can be committed to the `main` branch.
