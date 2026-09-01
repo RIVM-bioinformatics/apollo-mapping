@@ -343,6 +343,7 @@ rule_name="est_cov_deeptools_bamcoverage"
 use rule deeptools_bamcoverage as est_cov_deeptools_bamcoverage with:
     input:
         bam = rules.est_qual_sam_to_sorted_bam.output.bam,
+        _trigger_dag_samtools_index = rules.est_qual_index_bam.output.bai,
     output:
         bigwig= str(rules.est_qual_sam_to_sorted_bam.output.bam) + ".coverage.bw"
     message:
