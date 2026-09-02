@@ -2,7 +2,7 @@ import yaml
 import os
 from typing import List, Dict, Any, Union, Optional
 from collections.abc import Callable
-from workflow.helpers.generic_workflow_methods import check_rule_environments
+from workflow.helpers.generic_workflow_methods import check_rule_environments, check_rule_directives, assign_mem_gb_default
 ##from workflow.helpers.generic_workflow_methods import get_rule_name
 
 # define paths to workflow & scripts directories (helpers & tools not in conda environment!)
@@ -38,6 +38,7 @@ localrules:
     assign_reference,
     copy_reference_species_genomes,
     copy_reference_strain_genomes,
+    copy_blacklist_bed,
     # Realize these two below will often trigger this message in Snakemake:
     # "localrules directive specifies rules that are not present in the Snakefile:"
     copy_external_species_genome,
@@ -246,6 +247,12 @@ include: "workflow/rules/multiqc.smk"
 # EOF workflow construction: QC
 check_rule_environments(workflow=workflow,env_type="conda")     # preferably strict=True
 check_rule_environments(workflow=workflow,env_type="container") # preferably strict=True
+check_rule_directives(
+    workflow=workflow,
+    directives=["message", "threads", "resources.mem_gb", "log"],
+    strict=False
+)
+assign_mem_gb_default(workflow=workflow,default_mem_gb=config['mem_gb']['other'])
 
 if False:
     # TODO: IDEA/CONCEPT: pre-define "prefixes" to be used for log files, output (sub)directories etc.

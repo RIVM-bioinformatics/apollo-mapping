@@ -37,3 +37,12 @@ mem_gb:
     # UCSC tool family
     bigwigtobedgraph: 8
     bedgraphtobigwig: 8
+    # rules in subworkflow estimate_freebayes_qual.smk
+    # TODO: compartimentalize subworkflow
+    #       per-workflow pipeline_params.yaml file should be generated and respected by juno-library Pipeline class
+    # TODO: Some of these rules actually should preferably get explicitly stated mem_gb here
+    #       Now, falling back to assign_mem_gb_default() function in Snakefile
+    # TODO: add mem_usage profiling to juno-library Pipeline class.
+    #       there is nativ support for it in snakemake; this would allow easier HPC pipeline optimization
+    #mason_genome: 4
+
