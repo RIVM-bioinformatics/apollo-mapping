@@ -50,7 +50,7 @@ rule sam_to_sorted_bam:
     message:
         "Convert sam to sorted bam for {wildcards.sample} (mapped on '{wildcards.ref_type}')"
     conda:
-        "../envs/samtools_yq.yaml"
+        "../envs/samtools.yaml"
     # TODO: build custom container!
     ##container:
     ##    "docker://staphb/samtools:1.17"
@@ -149,9 +149,10 @@ rule bam_bifurcate_accessions:
     message:
         "Filtering out mitochondrial accessions in BAM of {wildcards.sample} (mapped on '{wildcards.ref_type}')"
     conda:
-        "../envs/bwa_samtools.yaml"
-    container:
-        "docker://staphb/samtools:1.17"
+        "../envs/samtools_yq.yaml"
+    # TODO: update container, must contain yq too
+    #container:
+    #    "docker://staphb/samtools:1.17"
     params:
         yaml = lambda wildcards, input: f"{input.fa}.accessions.yaml"
     threads:
