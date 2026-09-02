@@ -144,9 +144,22 @@ input=/mnt/scratch_dir/hofmansj/projects/apollo_pipelines/testdata_cauris/251121
 output=$HOME/my_scratch_dir/test-apollo-output
 mkdir -p $output
 python3 apollo_mapping.py -i $input -o $output \
-    --local --no-containers \
+    --no-containers \
     --clg cauris --skip-kraken \
     --snakemake-args "cores=1" "nodes=1" --dryrun
+
+# Example pipeline run based on testdata (testing --local and --custom-reference-dataset, but on the RIVM cluster)
+# TODO: "isolate" a small, custom reference dataset directory for this test case
+
+input=/mnt/scratch_dir/hofmansj/projects/apollo_pipelines/testdata_cauris/251121_VH01799_343_AAHKCJYM5_0004
+output=$HOME/my_scratch_dir/test-apollo-output-local
+mkdir -p $output
+python3 apollo_mapping.py -i $input -o $output \
+    --no-containers \
+    --clg cauris --skip-kraken \
+    --local --custom-reference-dataset /mnt/db/apollo/reference_new \
+    --snakemake-args "cores=1" "nodes=1" --dryrun
+
 
 # Example for multiclade masking (sub)worflow (assuming you've selected the appropriate input data yourself)
 
@@ -199,7 +212,10 @@ This pipeline is licensed with a AGPL3 license. Detailed information can be foun
 During the last upgrade of this pipeline, several (obvious) improvements were considered or became evident, that didn't make it into current stable release. See these as recommendations or a TODO list for the next wave of improvements.
 
 - (further) harmonization & compartimentalization of apollo-mapping in relation to other RIVM CIB snakemake pipelines
-  - most noticeably update juno-library to the newest concepts (argparse) used in apollo-mapping
+  - most noticeably update juno-library to the newest concepts (a.o. argparse) used in apollo-mapping
+    - see the bottom of Snakefile, using QC functions from workflow/helpers/generic_workflow_methods.py
+    - and all "generic" argparse stuff now making apollo-mapping.py overly heavy
+    - read the todo's in config/pipeline_params.yaml
   - refactor mostly apollo-mapping.py by moving (shared) code to other, generically reuseable repo(s)
     - rivm-ids-swc-snakeutils
     - rivm-ids-swc-name_to_be_defined
