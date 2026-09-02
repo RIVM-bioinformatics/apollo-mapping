@@ -37,7 +37,7 @@ The pipeline uses the following tools(NOT COMPLETE):
 ```bash
 git clone https://github.com/RIVM-bioinformatics/apollo-mapping.git
 cd apollo-mapping
-git checkout pre-v0.5.0-wrapup
+git checkout v0.5.0
 ```
 
 ### 2a. verify if hatch is already installed system-wide; if so, skip steps 2a-b-c
