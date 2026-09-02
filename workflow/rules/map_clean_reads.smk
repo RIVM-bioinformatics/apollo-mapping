@@ -50,9 +50,10 @@ rule sam_to_sorted_bam:
     message:
         "Convert sam to sorted bam for {wildcards.sample} (mapped on '{wildcards.ref_type}')"
     conda:
-        "../envs/bwa_samtools.yaml"
-    container:
-        "docker://staphb/samtools:1.17"
+        "../envs/samtools_yq.yaml"
+    # TODO: build custom container!
+    ##container:
+    ##    "docker://staphb/samtools:1.17"
     log:
         OUT + "/log/sam_to_sorted_bam/{sample}__{ref_type}.log",
     threads:

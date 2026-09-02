@@ -1,0 +1,7 @@
+name: samtools_yq
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::samtools
+- conda-forge::go-yq
