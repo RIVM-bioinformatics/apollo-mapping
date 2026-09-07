@@ -206,6 +206,7 @@ if MultiReferenceProvider.TRIGGER_MULTICLADE_MASKING_WORKFLOW:
                     f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.access-softclipped.bw",
                     f"{OUT}/softclipped-{ref_type}/{sample}.{ref_type}.softclipped.bw",
                     f"{OUT}/coverage/{ref_type}/{sample}.genome.bw",
+                    f"{OUT}"
                     ]
                 return outfile_templates
             return targets + cls._get_rule_all_targets_given_templates(fill_template_outfiles)
@@ -230,6 +231,7 @@ rule all:
         expand(OUT + "/qc_raw_fastq/{sample}_{read}_fastqc.html", sample=SAMPLES.keys(), read=["R1", "R2"]),
         expand(OUT + "/clean_fastq/{sample}_fastp.json", sample=SAMPLES.keys()),
         OUT + "/multiqc/multiqc.html",
+        expand(OUT + "/identify_impurity/{sample}/{sample}.skipped-or-not.txt", sample=SAMPLES.keys()),
 
 # EOF mapping part of the pipeline with (multi)QC
 include: "workflow/rules/qc_mapping.smk"
