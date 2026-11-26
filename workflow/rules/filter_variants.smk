@@ -55,7 +55,6 @@ def get_blacklist_bed(wildcards) -> str:
     #       if the bedfile is being used or is silently omitted from usage.
     return f"{OUT}/reference/species/cauris-GCA_002759435.3-blacklist.bed"
 
-apply_deeptools_rule_defaults(rules.make_coverage_track)
 
 rule_name="make_coverage_track"
 rule make_coverage_track:

@@ -67,6 +67,14 @@ In case you have still/already an hatch environment (Environment `default` alrea
 hatch env remove default
 ```
 
+### Verify the setup
+
+Activate the Hatch environment first (`hatch shell`), then run this from the repository root:
+```bash
+pytest tests/test_dag_dryrun.py
+```
+The test performs Snakemake dry-runs and checks the expected DAG rules, confirming that the pipeline test setup is working.
+
 ### Why use hatch instead of conda?
 
 Conda installation - default for most RIVM snakemake repo's - is **not** the preferred installation way anymore for apollo-mapping.
