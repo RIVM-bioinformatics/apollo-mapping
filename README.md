@@ -11,20 +11,13 @@
 * **Organization:**         Rijksinstituut voor Volksgezondheid en Milieu (RIVM)
 * **Department:**           Infektieziekteonderzoek, Diagnostiek en Laboratorium Surveillance (IDS), Bacteriologie (BPD)
 * **Start date:**           07 - 04 - 2023
-* **Refactoring episode:**  2026/Q2
+* **Refactoring:**  2026/Q2
 * **Commissioned by:**      Thijs Bosch and Auke de Jong
 
 ## About this project
-Apollo-mapping is the first pipeline created in the Apollo pipeline series. The Goal of these pipelines is to set up a routine surveillance for fungi (A.fumigatus, Candida). The apollo-mapping pipeline is created with the juno-template and juno-library.
+Apollo-mapping is the first pipeline created in the Apollo pipeline series. The goal of these pipelines is to set up a routine surveillance for fungi (A.fumigatus, Candida). The apollo-mapping pipeline is created with the juno-template and juno-library.
 
-The input of the pipeline is raw Illumina paired-end data  in the form of two fastq files (with extension .fastq, .fastq.gz, .fq or .fq.gz), containing the forward and the reversed reads ('R1' and 'R2' must be part of the file name, respectively).
-
-The pipeline uses the following tools(NOT COMPLETE):
-1. [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) (Andrews, 2010) is used to assess the quality of the raw Illumina reads
-2. [FastP](https://github.com/OpenGene/fastp) (Chen, Zhou, Chen and Gu, 2018) is used to remove poor quality data and adapter sequences 
-3. [Picard](https://broadinstitute.github.io/picard/) determines the library fragment lengths
-4. [MultiQC](https://multiqc.info/) (Ewels, Magnusson, Lundin, & Käller, 2016) is used to summarize analysis results and quality assessments in a single report for dynamic visualization.
-5. [Kraken2](https://ccb.jhu.edu/software/kraken2/) and [Bracken](http://ccb.jhu.edu/software/bracken/) for identification of fungal species.  
+The input of the pipeline is raw Illumina paired-end data  in the form of two fastq files (with extension .fastq, .fastq.gz, .fq or .fq.gz), containing the forward and the reverse reads ('R1' and 'R2' must be part of the file name, respectively).
 
 ## Prerequisities
 * Linux environment
@@ -58,7 +51,7 @@ conda activate ./local_conda
 pip install hatch hatch-conda
 ```
 
-### 2c. install hatch (on vanilla linux/ubuntu servers)
+### 2c. install hatch (on linux/ubuntu servers)
 ```bash
 pip install --user hatch hatch-conda
 ```
@@ -69,14 +62,14 @@ hatch env create
 hatch shell
 ```
 
-In case you have still/already an hatch environment (Environment `default` already exists), remove it first
+In case you have still/already an hatch environment (Environment `default` already exists), remove it first.
 ```bash
 hatch env remove default
 ```
 
-### Why not using the vanilla conda?
+### Why use hatch instead of conda?
 
-Conda installation - vanilla for most RIVM snakemake repo's - is **not** the preferred installation way anymore for apollo-mapping.
+Conda installation - default for most RIVM snakemake repo's - is **not** the preferred installation way anymore for apollo-mapping.
 It's possible that conda installation will work, but due to increased usage of inter-repo dependencies it might be obsolete or even broken.
 
 ## Parameters & Usage
@@ -122,8 +115,8 @@ python3 apollo_mapping.py -i [dir/to/PE/fastq_files] -o [/path/to/output/locatio
 
 - Pipeline can be run on a local machine, but expects considerable resources
 - For full performance, some additional database files should me made available (e.g. kraken database)
-- Make sure you've write permission in designated output dirs.
-- Preferably, know a little bit on snakemake (in order to paralellize and thereby speedup your workflow)
+- Make sure you have write permission in designated output dirs.
+- Preferably, know a little bit of snakemake (in order to paralellize and thereby speedup your workflow)
 
 # Example for multiclade analyses worflow (assuming you've selected the appropriate input data yourself)
 
@@ -198,6 +191,16 @@ In the (near) future, detailed information about the pipeline can be found in th
 * **reference:** Reference genome used & reference species identification intermediates
 * **simulated:** Fitted coverage and SNP Quality score distributions based on (depth of the) per-sample fastq 
 * **variant:** Variant calling results.
+
+## Incorporated tools
+The pipeline uses the following tools(NOT COMPLETE):
+1. [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) (Andrews, 2010) is used to assess the quality of the raw Illumina reads
+2. [FastP](https://github.com/OpenGene/fastp) (Chen, Zhou, Chen and Gu, 2018) is used to remove poor quality data and adapter sequences 
+3. [Picard](https://broadinstitute.github.io/picard/) determines the library fragment lengths
+4. [MultiQC](https://multiqc.info/) (Ewels, Magnusson, Lundin, & Käller, 2016) is used to summarize analysis results and quality assessments in a single report for dynamic visualization.
+5. [Kraken2](https://ccb.jhu.edu/software/kraken2/) and [Bracken](http://ccb.jhu.edu/software/bracken/) for species identification of potential contamination.
+6. [Freebayes](https://github.com/freebayes/freebayes) (Garrison & Marth, 2012) is used for variant calling   
+
 
 ## License
 This pipeline is licensed with a AGPL3 license. Detailed information can be found inside the 'LICENSE' file in this repository.

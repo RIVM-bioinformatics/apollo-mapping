@@ -33,6 +33,8 @@ PATH_TO_REFERENCES = config["reference_genomes_dir"]
 # some rules are conditional, or have conditional output files. Capture these for the final rule all
 CONDITIONAL_TARGETS = []
 
+SKIP_KRAKEN: bool = config['kraken_db_dir'] == "None"
+
 localrules:
     all,
     assign_reference,
@@ -230,8 +232,8 @@ rule all:
         # temporarily set fastqc pipeline to output targets
         expand(OUT + "/qc_raw_fastq/{sample}_{read}_fastqc.html", sample=SAMPLES.keys(), read=["R1", "R2"]),
         expand(OUT + "/clean_fastq/{sample}_fastp.json", sample=SAMPLES.keys()),
-        OUT + "/multiqc/multiqc.html",
         expand(OUT + "/identify_impurity/{sample}/{sample}.skipped-or-not.txt", sample=SAMPLES.keys()),
+        OUT + "/multiqc/multiqc.html",
 
 # EOF mapping part of the pipeline with (multi)QC
 include: "workflow/rules/qc_mapping.smk"

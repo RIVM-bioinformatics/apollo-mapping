@@ -5,9 +5,18 @@ from snakemake.rules import Rule
 
 # DRY: env name variables
 CONDA_ENV_BCF = "../envs/bcftools.yaml"
-CONTAINER_BCF = "" #"docker://PATH/TO/BCF/CONTAINER:<PINNEDVERSION>"
+CONDA_ENV_DEEPTOOLS = "../envs/deeptools.yaml"
+CONDA_ENV_CURVE_FITTING = "../envs/curve_fitting.yaml"
+#CONTAINER_BCF = "docker://staphb/bcftools:1.16" #"docker://PATH/TO/BCF/CONTAINER:<PINNEDVERSION>"
 
 def apply_bcftools_rule_defaults(rule_obj:Rule) -> None:
+    """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
+    # TODO: realize identical code exists in estimate_freebayes_qual.smk
+    #       Refactor into generic "workflow/helpers.py"
+    rule_obj.threads = config["threads"]["other"]
+    rule_obj.resources = {"mem_gb": config["mem_gb"]["other"]}
+
+def apply_deeptool_rule_defaults(rule_obj:Rule) -> None:
     """ DRY: extend a rule that relies on mason with its defaults; can't define 'conda:' in base rule """
     # TODO: realize identical code exists in estimate_freebayes_qual.smk
     #       Refactor into generic "workflow/helpers.py"
@@ -45,6 +54,51 @@ def get_blacklist_bed(wildcards) -> str:
     #       In rules.filter_variants.run it is checked (config["trigger_multiclade_masking_workflow"])
     #       if the bedfile is being used or is silently omitted from usage.
     return f"{OUT}/reference/species/cauris-GCA_002759435.3-blacklist.bed"
+
+apply_deeptools_rule_defaults(rules.make_coverage_track)
+
+rule_name="make_coverage_track"
+rule make_coverage_track:
+    input:
+        bam= rules.bam_bifurcate_accessions.output.bam_nuclear
+    output:
+        bigwig=OUT + "/variants/coverage_tracks/{sample}.bw",
+    message:
+        "Generating coverage track for {wildcards.sample}."
+    conda:
+        CONDA_ENV_DEEPTOOLS
+    log:
+        OUT + "/log/filter_variants/make_coverage_track_{sample}.log",
+    shell:
+        """
+        bamCoverage -b {input} -o {output} 2>&1>{log}
+        """
+
+rule_name = "curve_fitting"
+rule curve_fitting:
+    input:
+        vcf=rules.vcflib_breakmulti_wave.output.vcf,
+        bigwig=rules.make_coverage_track.output.bigwig,
+    output:
+        yaml_cov_qual_fitted=OUT + "/curve_fitting/fitted_ppf_table_{sample}.yaml",
+        plot_cov=OUT + "/curve_fitting/{sample}_model_fittings_coverage.html",
+        plot_qual=OUT + "/curve_fitting/{sample}_model_fittings_score.html",
+    message:
+        "Performing curve fitting on score and coverage values for {wildcards.sample}"
+    conda:
+        CONDA_ENV_CURVE_FITTING
+    log:
+        OUT + "/curve_fitting/curve_fitting_{sample}.log",
+    shell:
+        """
+        python workflow/scripts/curve_fitting.py \
+            -v {input.vcf} \
+            -b {input.bigwig} \
+            -o {output.yaml_cov_qual_fitted} \
+            --plot_cov {output.plot_cov} \
+            --plot_qual {output.plot_qual} \
+            > {log} 2>&1
+        """
 
 rule_name="filter_variants"
 rule filter_variants:
